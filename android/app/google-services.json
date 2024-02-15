@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "317087103968",
+    "project_id": "chatalong-fcc16",
+    "storage_bucket": "chatalong-fcc16.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317087103968:android:880f562465d3850c07c985",
+        "android_client_info": {
+          "package_name": "com.chatalong"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317087103968-32k6u7acf5p8n2ouc562vjbbv2t13mki.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.chatalong",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "317087103968-qul308mf604vhhf8c4kikg7u9qesveqc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbXYFIKYSDOa-e8f3Xordv770-mjZJOcE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317087103968-qul308mf604vhhf8c4kikg7u9qesveqc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
