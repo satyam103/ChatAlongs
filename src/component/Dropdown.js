@@ -22,6 +22,7 @@ export default Dropdown;
 
 export const RenderDropdown = props => {
   const navigation = useNavigation();
+  // console.log(props)
   return (
     <View
       style={{
@@ -29,20 +30,20 @@ export const RenderDropdown = props => {
         backgroundColor: 'rgb(10,20,60)',
         top: 45,
         right: 15,
-        width: 150,
+        width: 180,
         maxHeight: 200,
         borderRadius: 10,
         padding: 10,
       }}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {props.dataList.map((item, index) => {
+        {props?.dataList.map((item, index) => {
           return (
             <Pressable
               key={index}
               style={{height: 30,justifyContent:'center'}}
               onPress={() => {
                 navigation.navigate(`${item.page}`,props.friendData && {
-                  friendData : props.friendData
+                  item:{data : props?.friendData}
                 });
                 props.setDropDown(false);
               }}>

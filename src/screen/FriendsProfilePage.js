@@ -1,25 +1,32 @@
 import {useTheme} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {Image, Pressable, View, Text} from 'react-native';
+import {Image, Pressable, View, Text, FlatList} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {getFriendsProfileInfo} from '../component/AllFunctions';
 import {StyleSheet} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+let userid = '';
 const FriendsProfilePage = props => {
-  const [friendsData, setFriendsData] = useState();
+  const [friendsData, setFriendsData] = useState(
+    props?.route?.params?.item?.data,
+  );
   const [allMedia, setAllMedia] = useState();
   const {colors} = useTheme();
-  console.log(props.route.params.item.data);
-
+  console.log(props.route.params, '=======================friendprofile');
   useEffect(() => {
-    setFriendsData(props.route.params.item.data);
+    getData();
     getFriendsProfileInfo({
-      friendsId: props.route.params.item.data.userid,
+      friendsId: props?.route?.params?.item?.data?.userid,
       setAllMedia: setAllMedia,
     });
-  }, [props.route.params.item.data]);
+  }, []);
+  const getData = async () => {
+    userid = await AsyncStorage.getItem('userid');
+  };
+  console.log(userid);
   return (
     <View>
       <View
@@ -46,8 +53,10 @@ const FriendsProfilePage = props => {
           {friendsData && friendsData.profilePic ? (
             <Pressable
               onPress={() =>
+                friendsData.profilePic &&
                 props.navigation.navigate('friendsProfilePic', {
-                  profilePic: friendsData.profilePic,
+                  profilePic: friendsData?.profilePic,
+                  username: friendsData?.name,
                 })
               }
               style={{height: 160, width: 160}}>
@@ -88,45 +97,176 @@ const FriendsProfilePage = props => {
               width: '100%',
               marginTop: 15,
             }}>
-            <View style={styles.profileTab}>
-              <MaterialIcons name="message" color={colors.text} size={22} />
+            <Pressable
+              onPress={() =>
+                props.navigation.navigate('Chats', {
+                  data: friendsData,
+                  id: userid,
+                })
+              }
+              style={styles.profileTab}>
+              <MaterialIcons name="message" color={'#03C988'} size={22} />
               <Text style={{color: colors.text}}>Message</Text>
-            </View>
-            <View style={styles.profileTab}>
-              <Ionicons name="call" color={colors.text} size={22} />
+            </Pressable>
+            <Pressable
+              style={styles.profileTab}
+              onPress={() =>
+                props.navigation.navigate('Call', {
+                  userid: userid,
+                  call: 'voice call',
+                })
+              }>
+              <Ionicons name="call" color={'#03C988'} size={22} />
               <Text style={{color: colors.text}}>Voice</Text>
-            </View>
-            <View style={styles.profileTab}>
-              <Ionicons name="videocam" color={colors.text} size={22} />
+            </Pressable>
+            <Pressable
+              style={styles.profileTab}
+              onPress={() =>
+                props.navigation.navigate('Call', {
+                  userid: userid,
+                  call: 'agora',
+                })
+              }>
+              <Ionicons name="videocam" color={'#03C988'} size={22} />
               <Text style={{color: colors.text}}>Video</Text>
-            </View>
+            </Pressable>
           </View>
         </View>
+        {friendsData?.about && (
+          <View
+            style={{
+              minHeight: 60,
+              width: '100%',
+              marginVertical: 10,
+              padding: 10,
+              justifyContent: 'center',
+              paddingHorizontal: 20,
+              backgroundColor: '',
+            }}>
+            <Text style={{color: colors.text, fontSize: 16}}>
+              {friendsData?.about}asd
+            </Text>
+          </View>
+        )}
+        {allMedia?.length > 0 && (
+          <View
+            style={{
+              height: 150,
+              width: '100%',
+              backgroundColor: '',
+              paddingVertical: 10,
+              paddingHorizontal: 10,
+            }}>
+            <Pressable
+              onPress={() => console.log('Media links and docs')}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                paddingHorizontal: 10,
+                marginBottom: 5,
+              }}>
+              <Text style={{fontSize: 16, color: colors.text}}>
+                Media, links, and docs
+              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Text
+                  style={{
+                    color: colors.text,
+                    marginRight: 3,
+                    fontSize: 16,
+                    alignItems: 'center',
+                  }}>
+                  {allMedia?.length > 0 ? allMedia?.length : ''}
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={colors.text}
+                />
+              </View>
+            </Pressable>
+            <FlatList
+              horizontal={true}
+              data={allMedia}
+              initialNumToRender={10}
+              showsHorizontalScrollIndicator={false}
+              renderItem={item => (
+                <Pressable
+                  onPress={() =>
+                    props.navigation.navigate('MediaPage', {
+                      imageIndex: item.index,
+                      data: allMedia,
+                    })
+                  }
+                  style={{
+                    backgroundColor: 'white',
+                    height: 100,
+                    width: 100,
+                    borderRadius: 15,
+                    padding: 5,
+                    marginRight: 5,
+                  }}>
+                  <Image source={{uri: item?.image}} />
+                </Pressable>
+              )}
+            />
+          </View>
+        )}
         <View
           style={{
-            minHeight: 60,
             width: '100%',
+            backgroundColor: '',
             marginVertical: 10,
-            padding: 10,
             justifyContent: 'center',
             paddingHorizontal: 20,
-            backgroundColor: 'grey',
+            paddingVertical: 20,
           }}>
-          <Text style={{color: colors.text, fontSize: 16}}>
-            {friendsData?.about}About
-          </Text>
-        </View>
-        <View
-          style={{
-            height: 130,
-            width: '100%',
-            backgroundColor: 'grey',
-            paddingVertical: 10,
-            paddingHorizontal: 10,
-          }}>
-          <View>
-            <Text style={{color: colors.text, fontSize: 16}}>kdbcb</Text>
-          </View>
+          <Pressable
+            onPress={() => console.log('block')}
+            style={{
+              flexDirection: 'row',
+              marginVertical: 10,
+              alignItems: 'center',
+            }}>
+            <Ionicons
+              style={{transform: [{rotateY: '180deg'}]}}
+              name="ban"
+              size={22}
+              color={'#B31312'}
+            />
+            <Text
+              style={{
+                fontSize: 18,
+                marginHorizontal: 10,
+                color: '#B31312',
+                fontWeight: 'bold',
+              }}>
+              Block {friendsData?.name}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => console.log('report')}
+            style={{
+              flexDirection: 'row',
+              marginVertical: 10,
+              alignItems: 'center',
+            }}>
+            <FontAwesome
+              style={{transform: [{rotateY: '180deg'}]}}
+              name="thumbs-down"
+              size={22}
+              color={'#B31312'}
+            />
+            <Text
+              style={{
+                fontSize: 18,
+                marginHorizontal: 10,
+                color: '#B31312',
+                fontWeight: 'bold',
+              }}>
+              Report {friendsData?.name}
+            </Text>
+          </Pressable>
         </View>
       </View>
     </View>
