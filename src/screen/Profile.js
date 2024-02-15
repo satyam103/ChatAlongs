@@ -1,10 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-  Image,
-  Pressable,
-  Text,
-  View,
-} from 'react-native';
+import {Image, Pressable, Text, View} from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {EditnameModal, ProfileModal} from '../component/ProfileModals';
 import {getUserData} from '../component/AllFunctions';
@@ -55,6 +50,7 @@ const Profile = props => {
           {userData && userData.profilePic ? (
             <Pressable
               onPress={() =>
+                userData.profilePic &&
                 props.navigation.navigate('ProfilePic', {
                   profilePic: userData.profilePic,
                 })

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   BackHandler,
   Image,
   Pressable,
@@ -24,6 +25,7 @@ import {Modal} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native';
 import Lightbox from 'react-native-lightbox-v2';
 import {UserProfileModal} from '../component/ProfileModals';
+import {usebackbutton} from '../hooks/backHandler';
 // import Animated  from 'react-native-reanimated';
 
 let userId = '';
@@ -56,26 +58,25 @@ const Home = props => {
     userId = await AsyncStorage.getItem('userid');
   };
 
-  useEffect(() => {
-    const backAction = () => {
-      BackHandler.exitApp();
-    };
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-    return () => backHandler.remove();
-  }, []);
-  // const transition = SharedTransition.custom(values => {
-  //   'worklet';
-  //   return {
-  //     height: withSpring(values.targetHeight),
-  //     width: withSpring(values.targetWidth),
-  //   };
-  // });
+  // ========================= back handler ============================
+  const onbackpress = () => {
+    Alert.alert('Hold on!', 'Are you sure you want to exit?', [
+      {
+        text: 'Cancel',
+        onPress: () => null,
+        style: 'cancel',
+      },
+      {text: 'YES', onPress: () => BackHandler.exitApp()},
+    ]);
+    return true;
+  };
+  usebackbutton(props, onbackpress);
+
   return (
     <View>
-      <View onPress={()=> setDropDown(false)} style={{height: 120, backgroundColor: '#0766AD'}}>
+      <View
+        onPress={() => setDropDown(false)}
+        style={{height: 120, backgroundColor: '#0766AD'}}>
         <View
           style={{
             flexDirection: 'row',
@@ -127,9 +128,7 @@ const Home = props => {
                       <Pressable
                         onPress={() => {
                           setModalData({
-                            profilePic: item.data().profilePic,
                             data: item._data,
-                            id: userId,
                           });
                           setViewProfileModal(true);
                         }}>
@@ -173,7 +172,7 @@ const Home = props => {
                       <Modal
                         // visible={viewProfileModal}
                         transparent={true}
-                        animationType='fade'
+                        animationType="fade"
                         style={{height: '100%', justifyContent: 'flex-end'}}>
                         <TouchableWithoutFeedback
                           onPress={() => {
@@ -198,14 +197,16 @@ const Home = props => {
                                 }}>
                                 <Pressable
                                   onPress={() => {
-                                    setViewProfileModal(false);
-                                    props.navigation.navigate(
-                                      'friendsProfilePic',
-                                      {
-                                        profilePic: modalData.profilePic,
-                                        username: modalData.data.name,
-                                      },
-                                    );
+                                    modalData?.data?.profilePic &&
+                                      (setViewProfileModal(false),
+                                      props.navigation.navigate(
+                                        'friendsProfilePic',
+                                        {
+                                          profilePic:
+                                            modalData?.data?.profilePic,
+                                          username: modalData?.data?.name,
+                                        },
+                                      ));
                                   }}
                                   style={{height: 265}}>
                                   <Image
@@ -214,9 +215,11 @@ const Home = props => {
                                       width: '100%',
                                     }}
                                     source={
-                                      modalData.profilePic && {
-                                        uri: modalData.profilePic,
-                                      }
+                                      modalData?.data?.profilePic
+                                        ? {
+                                            uri: modalData.data.profilePic,
+                                          }
+                                        : require('../../assets/image/unknownprofile.jpg')
                                     }
                                   />
                                 </Pressable>
@@ -247,39 +250,55 @@ const Home = props => {
                                       setViewProfileModal(false);
                                       props.navigation.navigate('Chats', {
                                         data: modalData.data,
-                                        id: modalData.id,
+                                        id: userId,
                                       });
                                     }}>
-                                    <MaterialIcon name="message" size={22} />
+                                    <MaterialIcon
+                                      name="message"
+                                      size={22}
+                                      color={'#03C988'}
+                                    />
                                   </Pressable>
                                   <Pressable
                                     onPress={() => {
                                       setViewProfileModal(false);
                                       props.navigation.navigate('Call', {
-                                        userid: modalData.id,
+                                        userid: userId,
                                         call: 'voice call',
                                       });
                                     }}>
-                                    <Ionicons name="call" size={22} />
+                                    <Ionicons
+                                      name="call"
+                                      size={22}
+                                      color={'#03C988'}
+                                    />
                                   </Pressable>
                                   <Pressable
                                     onPress={() => {
                                       setViewProfileModal(false);
                                       props.navigation.navigate('Call', {
-                                        userid: modalData.id,
+                                        userid: userId,
                                         call: 'agora',
                                       });
                                     }}>
-                                    <Ionicons name="videocam" size={22} />
+                                    <Ionicons
+                                      name="videocam"
+                                      size={22}
+                                      color={'#03C988'}
+                                    />
                                   </Pressable>
                                   <Pressable
                                     onPress={() => {
                                       setViewProfileModal(false);
-                                      props.navigation.navigate('friendsProfilePage',{item:modalData})
+                                      props.navigation.navigate(
+                                        'friendsProfilePage',
+                                        {item: modalData},
+                                      );
                                     }}>
                                     <Ionicons
-                                      name="information-circle"
+                                      name="information-circle-outline"
                                       size={22}
+                                      color={'#03C988'}
                                     />
                                   </Pressable>
                                 </View>
@@ -295,7 +314,13 @@ const Home = props => {
           </ScrollView>
         </View>
       )}
-      {dropdown && <RenderDropdown dataList={menu} setDropDown={setDropDown} dropdown={dropdown}/>}
+      {dropdown && (
+        <RenderDropdown
+          dataList={menu}
+          setDropDown={setDropDown}
+          dropdown={dropdown}
+        />
+      )}
     </View>
   );
 };

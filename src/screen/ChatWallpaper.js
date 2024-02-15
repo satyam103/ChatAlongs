@@ -33,12 +33,10 @@ const ChatWallpaper = props => {
           ? 'chats'
           : 'users';
     };
-    props?.route?.params &&
-      props.route.params.friendData &&
-      setFriendsdata(props.route.params.friendData);
+      props?.route?.params?.item?.data &&
+      setFriendsdata(props.route.params.item?.data);
 
-    props?.route?.params &&
-      props.route.params.friendData &&
+      props?.route?.params?.item?.data &&
       getContactSettingData(friendsdata?.userid, setContactSettingData);
     getAllSettingData(setAllSetting);
     getData();
@@ -83,8 +81,8 @@ const ChatWallpaper = props => {
   //   =================== change opacity ==============================================================
   const setOpacity = async value => {
     const docId =
-      props?.route?.params && props.route.params.friendData
-        ? userid + props.route.params.friendData.userid
+      props?.route?.params && props?.route?.params?.item?.data
+        ? userid + props?.route?.params?.item?.data.userid
         : userid;
     setBackgroundOpacity({value: value, docId});
   };
@@ -111,7 +109,7 @@ const ChatWallpaper = props => {
     <View>
       <Header
         title={
-          props?.route?.params && props.route.params.friendData
+          props?.route?.params && props?.route?.params?.item?.data
             ? 'Chat Wallpaper'
             : 'Wallpaper'
         }

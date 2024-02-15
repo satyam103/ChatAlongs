@@ -195,7 +195,7 @@ export const removeProfilePic = ({profilePic, toggleModal}) => {
       profilePic: firestore.FieldValue.delete(),
     })
     .then(res => {
-      let imageRef = storage.refFromURL(props.profilePic);
+      let imageRef = storage().refFromURL(props.profilePic);
       imageRef.delete();
       toggleModal();
       console.log(res);
@@ -206,13 +206,14 @@ export const removeProfilePic = ({profilePic, toggleModal}) => {
 export const getFriendsProfileInfo = async ({friendsId,setAllMedia}) => {
   userid = await AsyncStorage.getItem('userid');
   const media = firestore()
-    .collection('chats')
-    .doc(userid + friendsId)
-    .collection('media')
-    .orderBy('createdAt', 'desc');
+  .collection('chats')
+  .doc(userid + friendsId)
+  .collection('media')
+  .orderBy('createdAt', 'desc');
   media.onSnapshot(querysnapshot => {
     const allmessages = querysnapshot.docs.map(item => {
-      console.log(item._data)
+    return (item._data)
+      
     });
     setAllMedia(allmessages)
   });

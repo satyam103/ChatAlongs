@@ -7,6 +7,7 @@ import {
   Send,
 } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome1 from 'react-native-vector-icons/FontAwesome5';
@@ -40,7 +41,6 @@ const Chats = props => {
   const [dropdown, setDropDown] = useState(false);
   const [allSetting, setAllSetting] = useState();
   const [contactChatSetting, setContactChatSetting] = useState();
-
   useEffect(() => {
     getAllSettingData(setAllSetting);
     getContactSettingData(
@@ -93,57 +93,47 @@ const Chats = props => {
     }
   };
   const onSend = useCallback(
-    (messages = []) => {
+    async (messages = []) => {
       const msg = messages[0];
       let mymsg = {};
-      if (messages.length === 0) {
-        const messageId = uuid.v4();
-        if (isAttachImage) {
-          mymsg = {
-            image: imagePath,
-            createdAt: Date.parse(new Date()),
-            sendBy: props.route.params.id,
-            sendTo: props.route.params.data.userid,
-            _id: messageId,
-            user: {
-              _id: props.route.params.id,
-            },
-          };
-          setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, mymsg),
-          );
-          setImagePath('');
-          setIsAttachImage(false);
-        } else if (isAttachFile) {
-          mymsg = {
-            file: {
-              url: filePath,
-            },
-            createdAt: Date.parse(new Date()),
-            sendBy: props.route.params.id,
-            sendTo: props.route.params.data.userid,
-            _id: messageId,
-            user: {
-              _id: props.route.params.id,
-            },
-            sent: true,
-            received: JSON.parse(`${msg.isRead}`),
-          };
-          setMessages(previousMessages =>
-            GiftedChat.append(previousMessages, mymsg),
-          );
-        }
-      } else if (isAttachImage) {
+      console.log(msg, mymsg);
+      console.log(imagePath);
+      if (isAttachImage) {
+        const fileName = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+        const reference = storage().ref(`media/${fileName}`);
+        await reference.putFile(imagePath);
+        const downloadURL = await reference.getDownloadURL();
         mymsg = {
           ...msg,
-          sendBy: props.route.params.id,
           sendTo: props.route.params.data.userid,
+          sendBy: props.route.params.id,
           createdAt: Date.parse(msg.createdAt),
-          image: imagePath,
+          image: downloadURL,
         };
         setMessages(previousMessages =>
           GiftedChat.append(previousMessages, mymsg),
         );
+        firestore()
+          .collection('chats')
+          .doc('' + props.route.params.data.userid + props.route.params.id)
+          .collection('media')
+          .add({
+            _id: mymsg.messageId,
+            image: mymsg.downloadURL,
+            createdAt: mymsg.Date.parse(new Date()),
+            sendBy: props.route.params.id,
+          });
+        firestore()
+          .collection('chats')
+          .doc('' + props.route.params.id + props.route.params.data.userid)
+          .collection('media')
+          .add({
+            _id: mymsg.messageId,
+            image: mymsg.downloadURL,
+            createdAt: mymsg.Date.parse(new Date()),
+            sendBy: props.route.params.id,
+          });
+
         setImagePath('');
         setIsAttachImage(false);
       } else if (isAttachFile) {
@@ -350,11 +340,11 @@ const Chats = props => {
       </View>
     );
   };
-
   const menu = [
-    {name: 'View Profile', page: 'profile'},
-    {name: 'Media', page: 'profile'},
+    {name: 'View Profile', page: 'friendsProfilePage'},
+    {name: 'Media, links, and docs', page: 'profile'},
     {name: 'Wallpaper', page: 'chatWallpaper'},
+    {name: 'More', page: 'friendsProfilePage'},
   ];
 
   return (
@@ -368,29 +358,45 @@ const Chats = props => {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingHorizontal: 10,
+          paddingRight: 10,
         }}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <TouchableOpacity onPress={() => props.navigation.goBack()}>
-            <FontAwesome name="arrow-left" size={22} color={'white'} />
-          </TouchableOpacity>
-          <Image
-            source={
-              props.route.params.data && props.route.params.data.profilePic
-                ? {uri: props.route.params.data.profilePic}
-                : require('../../assets/image/unknownprofile.jpg')
-            }
-            style={{height: 40, width: 40, borderRadius: 20, marginLeft: 15}}
-          />
-          <Text
+          <TouchableOpacity
             style={{
-              color: 'white',
-              marginHorizontal: 5,
-              fontSize: 24,
-              fontWeight: 'bold',
-            }}>
-            {props.route.params.data.name}
-          </Text>
+              width: 40,
+              height: 60,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            onPress={() => props.navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color={'white'} />
+          </TouchableOpacity>
+          <Pressable
+            onPress={() =>
+              props.navigation.navigate('friendsProfilePage', {
+                item: {
+                  data: props?.route?.params?.data,
+                },
+              })
+            }
+            style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Image
+              source={
+                props.route.params.data && props.route.params.data.profilePic
+                  ? {uri: props.route.params.data.profilePic}
+                  : require('../../assets/image/unknownprofile.jpg')
+              }
+              style={{height: 40, width: 40, borderRadius: 20}}
+            />
+            <Text
+              style={{
+                color: 'white',
+                marginHorizontal: 8,
+                fontSize: 24,
+              }}>
+              {props.route.params.data.name}
+            </Text>
+          </Pressable>
         </View>
         <View style={{flexDirection: 'row'}}>
           <Pressable

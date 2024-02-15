@@ -18,6 +18,7 @@ import CallingPage from '../screen/CallingPage';
 import {ProfilePic, FriendsProfilePic} from '../screen/ProfilePic';
 import Header from '../component/Header';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
+import MediaPage from '../screen/MediaPage';
 
 const Routing = () => {
   const Stack = createStackNavigator();
@@ -144,9 +145,15 @@ const Routing = () => {
           name="friendsProfilePic"
           component={FriendsProfilePic}
           options={({route, navigation}) => {}}
-        /><Stack.Screen
+        />
+        <Stack.Screen
           name="friendsProfilePage"
           component={FriendsProfilePage}
+          options={({route, navigation}) => {}}
+        />
+        <Stack.Screen
+          name="MediaPage"
+          component={MediaPage}
           options={({route, navigation}) => {}}
         />
       </Stack.Navigator>
