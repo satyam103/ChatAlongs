@@ -40,7 +40,7 @@ const FriendsProfilePage = props => {
           style={{
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'grey',
+            backgroundColor: '',
             padding: 10,
           }}>
           {friendsData && friendsData.profilePic ? (
@@ -124,7 +124,9 @@ const FriendsProfilePage = props => {
             paddingVertical: 10,
             paddingHorizontal: 10,
           }}>
-          <Text style={{color: colors.text, fontSize: 16}}>kdbcb</Text>
+          <View>
+            <Text style={{color: colors.text, fontSize: 16}}>kdbcb</Text>
+          </View>
         </View>
       </View>
     </View>
