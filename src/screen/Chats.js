@@ -21,8 +21,12 @@ import {
   Pressable,
   ActivityIndicator,
   TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
-// import {TouchableOpacity} from 'react-native-gesture-handler';
+// import * as ImagePicker from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-crop-picker';
+
 import * as DocumentPicker from 'react-native-document-picker';
 import InChatFileTransfer from '../component/InChatFileTransfer';
 import uuid from 'react-native-uuid';
@@ -39,6 +43,7 @@ const Chats = props => {
   const [imagePath, setImagePath] = useState('');
   const [filePath, setFilePath] = useState('');
   const [dropdown, setDropDown] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [allSetting, setAllSetting] = useState();
   const [contactChatSetting, setContactChatSetting] = useState();
   useEffect(() => {
@@ -72,17 +77,19 @@ const Chats = props => {
         allowMultiSelection: true,
       });
       const fileUri = result[0].fileCopyUri;
-      if (!fileUri) {
-        console.log('File URI is undefined or null');
-        return;
-      }
-      if (fileUri.indexOf('.png') !== -1 || fileUri.indexOf('.jpg') !== -1) {
-        setImagePath(fileUri);
-        setIsAttachImage(true);
-      } else {
-        setFilePath(fileUri);
-        setIsAttachFile(true);
-      }
+      console.log(result);
+      console.log('file============+', fileUri);
+      // if (!fileUri) {
+      //   console.log('File URI is undefined or null');
+      //   return;
+      // }
+      // if (fileUri.indexOf('.png') !== -1 || fileUri.indexOf('.jpg') !== -1) {
+      //   setImagePath(fileUri);
+      //   setIsAttachImage(true);
+      // } else {
+      //   setFilePath(fileUri);
+      //   setIsAttachFile(true);
+      // }
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled file picker');
@@ -92,6 +99,57 @@ const Chats = props => {
       }
     }
   };
+  // ======================= choose image from gallery =========================
+  const selectImage = () => {
+    ImagePicker.openPicker({
+      width: 200,
+      height: 200,
+      compressImageMaxHeight: 400,
+      compressImageMaxWidth: 400,
+      cropping: true,
+      freeStyleCropEnabled: true,
+      multiple: true,
+    }).then(response => {
+      let tempArray = [];
+      console.log('responseimage-------' + response);
+      response.forEach(item => {
+        let image = {
+          uri: item.path,
+          width: item.width,
+          height: item.height,
+        };
+        console.log('imagpath==========' + image.uri);
+        tempArray.push(image);
+        props.navigation.navigate('SendImages', {data: tempArray});
+        console.log('imagpath==========' + tempArray);
+      });
+    });
+  };
+
+  // =========================== capture using camera ===========================
+  const selectCamera = () => {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+      freeStyleCropEnabled: true,
+      multiple: true,
+    }).then(response => {
+      let tempArray = [];
+      console.log('responseimage-------' + response);
+      // response.forEach(item => {
+        let image = {
+          uri: response.path,
+          width: response.width,
+          height: response.height,
+        };
+        console.log('imagpath==========' + image.uri);
+        tempArray.push(image);
+        props.navigation.navigate('SendImages', {data: tempArray});
+        console.log('imagpath==========' + tempArray);
+      // });
+    });
+  };
+
   const onSend = useCallback(
     async (messages = []) => {
       const msg = messages[0];
@@ -286,7 +344,6 @@ const Chats = props => {
           paddingHorizontal: 10,
           alignItems: 'flex-end',
           marginTop: 5,
-          // position:'relative',
           bottom: 3,
         }}>
         <Pressable
@@ -304,13 +361,12 @@ const Chats = props => {
             justifyContent: 'flex-end',
             paddingBottom: 12,
           }}
-          onPress={_pickDocument}>
+          onPress={() => setModalVisible(!modalVisible)}>
           <FontAwesome
             name="paperclip"
             size={25}
             color={'black'}
             style={{
-              // marginBottom: 10,
               marginRight: 10,
             }}
           />
@@ -326,8 +382,9 @@ const Chats = props => {
           backgroundColor: 'rgba(0,0,0,0)',
           borderTopWidth: 0,
           bottom: 2.3,
-          height: 60,
+          height: 55,
           justifyContent: 'flex-end',
+          paddingHorizontal: 5,
         }}
       />
     );
@@ -466,7 +523,6 @@ const Chats = props => {
           renderComposer={renderComposer}
           renderAvatar={null}
           renderLoading={renderLoading}
-          // bottomOffset={60}
           textInputStyle={{
             color: 'black',
             paddingHorizontal: 5,
@@ -485,6 +541,160 @@ const Chats = props => {
           setDropDown={setDropDown}
           dropdown={dropdown}
         />
+      )}
+      {modalVisible && (
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="fade"
+          style={{
+            height: '100%',
+            justifyContent: 'flex-end',
+            position: 'relative',
+          }}>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View
+              style={{
+                alignSelf: 'center',
+                height: '100%',
+                width: '100%',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                bottom: 65,
+              }}>
+              <TouchableWithoutFeedback>
+                <View
+                  style={{
+                    backgroundColor: 'rgb(50,60,90)',
+                    elevation: 5,
+                    width: '92%',
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    paddingVertical: 20,
+                  }}>
+                  <View
+                    style={{
+                      flexWrap: 'wrap',
+                      flexDirection: 'row',
+                      width: 210,
+                      paddingVertical: 10,
+                    }}>
+                    <Pressable
+                      onPress={() => {
+                        setModalVisible(false);
+                        _pickDocument();
+                      }}
+                      style={{
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          height: 50,
+                          width: 50,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 50,
+                          marginRight: 15,
+                          backgroundColor: 'rgb(125,105,235)',
+                        }}>
+                        <Ionicons name="document" size={22} color={'white'} />
+                      </View>
+                      <Text>Document</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setModalVisible(false);
+                        selectCamera();
+                      }}
+                      style={{
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          height: 50,
+                          width: 50,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 50,
+                          backgroundColor: 'rgb(215,25,25)',
+                          marginHorizontal: 15,
+                        }}>
+                        <Ionicons name="camera" size={22} color={'white'} />
+                      </View>
+                      <Text>camera</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setModalVisible(false);
+                        selectImage();
+                      }}
+                      style={{
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          height: 50,
+                          width: 50,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 50,
+                          marginLeft: 15,
+                          backgroundColor: 'rgb(205,65,255)',
+                        }}>
+                        <FontAwesome name="photo" size={22} color={'white'} />
+                      </View>
+                      <Text>Gallery</Text>
+                    </Pressable>
+                  </View>
+                  <View
+                    style={{
+                      flexWrap: 'wrap',
+                      flexDirection: 'row',
+                      width: 210,
+                      paddingVertical: 10,
+                    }}>
+                    <Pressable
+                      style={{
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          height: 50,
+                          width: 50,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 50,
+                          marginRight: 15,
+                          backgroundColor: 'aqua',
+                        }}>
+                        <Ionicons name="person" size={22} color={'white'} />
+                      </View>
+                      <Text>Contact</Text>
+                    </Pressable>
+                    <Pressable
+                      style={{
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          height: 50,
+                          width: 50,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          borderRadius: 50,
+                          backgroundColor: 'green',
+                          marginHorizontal: 15,
+                        }}>
+                        <Ionicons name="location" size={22} color={'white'} />
+                      </View>
+                      <Text>Location</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       )}
     </View>
   );
