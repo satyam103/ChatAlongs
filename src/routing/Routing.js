@@ -19,6 +19,7 @@ import {ProfilePic, FriendsProfilePic} from '../screen/ProfilePic';
 import Header from '../component/Header';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
 import MediaPage from '../screen/MediaPage';
+import { SendImages } from '../component/ChatSelectitem';
 
 const Routing = () => {
   const Stack = createStackNavigator();
@@ -154,6 +155,10 @@ const Routing = () => {
         <Stack.Screen
           name="MediaPage"
           component={MediaPage}
+          options={({route, navigation}) => {}}
+        /><Stack.Screen
+          name="SendImages"
+          component={SendImages}
           options={({route, navigation}) => {}}
         />
       </Stack.Navigator>
