@@ -23,8 +23,6 @@ import {
 import {useTheme} from '@react-navigation/native';
 import {Modal} from 'react-native';
 import {TouchableWithoutFeedback} from 'react-native';
-import Lightbox from 'react-native-lightbox-v2';
-import {UserProfileModal} from '../component/ProfileModals';
 import {usebackbutton} from '../hooks/backHandler';
 // import Animated  from 'react-native-reanimated';
 
