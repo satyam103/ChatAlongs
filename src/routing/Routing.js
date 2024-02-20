@@ -20,6 +20,7 @@ import Header from '../component/Header';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
 import MediaPage from '../screen/MediaPage';
 import { SendImages } from '../component/ChatSelectitem';
+import SendLocation from '../screen/SendLocation';
 
 const Routing = () => {
   const Stack = createStackNavigator();
@@ -156,9 +157,15 @@ const Routing = () => {
           name="MediaPage"
           component={MediaPage}
           options={({route, navigation}) => {}}
-        /><Stack.Screen
+        />
+        <Stack.Screen
           name="SendImages"
           component={SendImages}
+          options={({route, navigation}) => {}}
+        />
+        <Stack.Screen
+          name="sendLocation"
+          component={SendLocation}
           options={({route, navigation}) => {}}
         />
       </Stack.Navigator>

@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   Modal,
   TouchableWithoutFeedback,
+  PermissionsAndroid,
 } from 'react-native';
 // import * as ImagePicker from 'react-native-image-picker';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -35,13 +36,18 @@ import {
   getAllSettingData,
   getContactSettingData,
 } from '../component/AllFunctions';
+import Geolocation from '@react-native-community/geolocation';
+import {PERMISSIONS, RESULTS, check} from 'react-native-permissions';
 
 const Chats = props => {
+  // console.log(props)
   const [messages, setMessages] = useState([]);
   const [isAttachImage, setIsAttachImage] = useState(false);
   const [isAttachFile, setIsAttachFile] = useState(false);
   const [imagePath, setImagePath] = useState('');
   const [filePath, setFilePath] = useState('');
+  const [userLatitude, setUserLatitude] = useState(null);
+  const [userLongitude, setUserLongitude] = useState(null);
   const [dropdown, setDropDown] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [allSetting, setAllSetting] = useState();
@@ -66,6 +72,59 @@ const Chats = props => {
       setMessages(allmessages);
     });
   }, []);
+  // ======================= get location ============================
+  const getCurrentLocation = () => {
+    check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
+      if (result === RESULTS.GRANTED) {
+        Geolocation.getCurrentPosition(
+          position => {
+            console.log(position);
+            let initialPosition = position;
+            if (position) {
+              console.log(
+                'current locations data ',
+                initialPosition?.coords?.latitude +
+                  ' ' +
+                  initialPosition?.coords?.longitude,
+              );
+              setUserLatitude(initialPosition?.coords?.latitude);
+              setUserLongitude(initialPosition?.coords?.longitude);
+              console.log(
+                userLatitude + ' Lat ------------------' + userLongitude,
+              );
+            }
+          },
+          error => console.log('Error', JSON.stringify(error)),
+          {enableHighAccuracy: false, timeout: 20000},
+        );
+        console.log('Location permission is enabled');
+      } else {
+        requestAccessLocationPermission();
+        console.log('Location permission is not enabled');
+      }
+    });
+  };
+  const requestAccessLocationPermission = () => {
+    Geolocation.requestAuthorization(() => {
+      getCurrentLocation();
+      // setLocationEnabled(true);
+    });
+    // if (Platform.OS == 'ios') {
+    //   check(PERMISSIONS.IOS.LOCATION_ALWAYS).then(result => {
+    //     if (result === RESULTS.GRANTED) {
+    //       getCurrentLocation();
+    //       // setLocationEnabled(true);
+    //     }
+    //   });
+    // } else {
+    check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
+      if (result === RESULTS.GRANTED) {
+        getCurrentLocation();
+        // setLocationEnabled(true);
+      }
+    });
+    // }
+  };
 
   // ===================== gifted chat components ===========================
   const _pickDocument = async () => {
@@ -112,20 +171,26 @@ const Chats = props => {
     }).then(response => {
       let tempArray = [];
       console.log('responseimage-------' + response);
-      response.forEach(item => {
+      response.forEach((item, index) => {
         let image = {
           uri: item.path,
           width: item.width,
           height: item.height,
+          imageIndex: index,
         };
-        console.log('imagpath==========' + image.uri);
+        console.log('imagpath==========' + image);
         tempArray.push(image);
-        props.navigation.navigate('SendImages', {data: tempArray});
         console.log('imagpath==========' + tempArray);
+      });
+      props.navigation.navigate('SendImages', {
+        data: tempArray,
+        userdata: {
+          id: props?.route?.params?.data.id,
+          name: props?.route?.params?.data.name,
+        },
       });
     });
   };
-
   // =========================== capture using camera ===========================
   const selectCamera = () => {
     ImagePicker.openCamera({
@@ -137,15 +202,15 @@ const Chats = props => {
       let tempArray = [];
       console.log('responseimage-------' + response);
       // response.forEach(item => {
-        let image = {
-          uri: response.path,
-          width: response.width,
-          height: response.height,
-        };
-        console.log('imagpath==========' + image.uri);
-        tempArray.push(image);
-        props.navigation.navigate('SendImages', {data: tempArray});
-        console.log('imagpath==========' + tempArray);
+      let image = {
+        uri: response.path,
+        width: response.width,
+        height: response.height,
+      };
+      console.log('imagpath==========' + image.uri);
+      tempArray.push(image);
+      props.navigation.navigate('SendImages', {data: tempArray});
+      console.log('imagpath==========' + tempArray);
       // });
     });
   };
@@ -154,8 +219,6 @@ const Chats = props => {
     async (messages = []) => {
       const msg = messages[0];
       let mymsg = {};
-      console.log(msg, mymsg);
-      console.log(imagePath);
       if (isAttachImage) {
         const fileName = imagePath.substring(imagePath.lastIndexOf('/') + 1);
         const reference = storage().ref(`media/${fileName}`);
@@ -354,7 +417,7 @@ const Chats = props => {
           }}>
           <FontAwesome1 name="grin-alt" size={22} color={'grey'} />
         </Pressable>
-        <Composer {...props} textInputStyle={{bottom: 0}} />
+        <Composer {...props} textInputStyle={{bottom: 0, color: 'black'}} />
         <TouchableOpacity
           style={{
             alignItems: 'flex-end',
@@ -672,6 +735,10 @@ const Chats = props => {
                       <Text>Contact</Text>
                     </Pressable>
                     <Pressable
+                      onPress={()=> {
+                        setModalVisible(false)
+                        props.navigation.navigate('sendLocation')
+                      }}
                       style={{
                         alignItems: 'center',
                       }}>

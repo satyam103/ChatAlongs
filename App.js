@@ -9,15 +9,13 @@ import {
   DarkTheme,
   DefaultTheme,
   NavigationContainer,
-  useTheme,
 } from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StyleSheet, Text} from 'react-native';
+import { StyleSheet} from 'react-native';
 import Routing from './src/routing/Routing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import {PermissionsAndroid} from 'react-native';
-import Contact from 'react-native-contacts';
 
 //
 function App() {
@@ -68,23 +66,23 @@ function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+// const styles = StyleSheet.create({
+//   sectionContainer: {
+//     marginTop: 32,
+//     paddingHorizontal: 24,
+//   },
+//   sectionTitle: {
+//     fontSize: 24,
+//     fontWeight: '600',
+//   },
+//   sectionDescription: {
+//     marginTop: 8,
+//     fontSize: 18,
+//     fontWeight: '400',
+//   },
+//   highlight: {
+//     fontWeight: '700',
+//   },
+// });
 
 export default App;
