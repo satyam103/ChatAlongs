@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
-import storage from '@react-native-firebase/storage';
 import Contact from 'react-native-contacts';
 import {openCamera, openPicker} from 'react-native-image-crop-picker';
 
@@ -49,54 +49,101 @@ export const getContactSettingData = async (friendsId, setData) => {
 // ========================== non user contacts ============================
 export const getAllContactUserData = async setData => {
   userid = await AsyncStorage.getItem('userid');
-  console.log(userid, 'hello');
   const users = await firestore()
     .collection('users')
     .where('userid', '!=', userid)
     .get();
   const allUserData = users.docs;
-  // console.log(allUserData,"data")
-
-  Contact.getAll().then(contacts => {
-    // console.log(JSON.stringify(contacts,null,2))
-    for (const i in contacts) {
-      // console.log(contacts.displayName)
-    }
-    //   const contactData = contacts.map(values => {
-    //     console.log(values.displayName,"knjj")
-    //     let number = '';
-    //     for (const i of values.phoneNumbers[0].number) {
-    //       if (i !== '(' && i != ')' && i != ' ' && i != '-') {
-    //         number += i;
-    //         console.log(number)
-    //       }
-    //     }
-    //     return {number, name: values.displayName};
-    //   });
-
-    // const newData =
-    //   allUserData &&
-    //   allUserData.map((values, index) => {
-    //     return values.data().mobile;
-    //   });
-    // const filteredData = contactData.filter(values => {
-    //   const present = newData.find(value => {
-    //     return values.number === value && values.number;
-    //   });
-    //   return present !== undefined && values.number;
-    // });
-    // const contactUserData = allUserData.filter(values => {
-    //   const present = filteredData.find(value => {
-    //     if (value.number === values.data().mobile) {
-    //       values.data().contactName = value.name;
-    //       return values;
-    //     }
-    //   });
-    //   return present && values.data();
-    // });
-    // console.log(JSON.stringify(contactUserData, null, 2));
+  const contactData = await getAllContact();
+  const newData =
+    allUserData &&
+    allUserData.map((values, index) => {
+      return values.data().mobile;
+    });
+  const filteredData = contactData.filter(values => {
+    const present = newData.find(value => {
+      return values.number.includes(value) && value;
+    });
+    return present !== undefined && values.name;
   });
-  setData(allUserData);
+  const contactUserData = allUserData
+    .filter(values => {
+      const presentData = filteredData.find(value => {
+        return (
+          value.number.includes(values._data.mobile) && {
+            ...values._data,
+            name: value.name,
+          }
+        );
+      });
+      return presentData && {...values.data()};
+    })
+    .map(values => {
+      const presentData = filteredData.find(value => {
+        return (
+          value.number.includes(values._data.mobile) && {
+            ...values._data,
+            name: value.name,
+          }
+        );
+      });
+      return {...values._data, name: presentData.name};
+    });
+  setData(contactUserData);
+};
+export const getNonUserContactData = async setData => {
+  userid = await AsyncStorage.getItem('userid');
+  const users = await firestore()
+    .collection('users')
+    .where('userid', '!=', userid)
+    .get();
+  const allUserData = users.docs;
+  const contactData = await getAllContact();
+  const newData =
+    allUserData &&
+    allUserData.map((values, index) => {
+      return values.data().mobile;
+    });
+  const filteredData = contactData.filter(values => {
+    const tempArray = [];
+    values.number.forEach(element => {
+      const present = newData.find(value => {
+        return value === element && value;
+      });
+      if (present === undefined) {
+        tempArray.push({name: values.name, number: element});
+      }
+      return present === undefined && values.number;
+    });
+    return tempArray;
+  });
+  const strAscending = [...filteredData].sort((a, b) =>
+    a.name > b.name ? 1 : -1,
+  );
+  setData(strAscending);
+};
+export const getAllContact = async () => {
+  const contactData = await Contact.getAll().then(contacts => {
+    const contactdata = contacts.map(values => {
+      let number = '';
+      let tempArray = [];
+      values.phoneNumbers.forEach(element => {
+        for (const i of element.number) {
+          if (i !== '(' && i != ')' && i != ' ' && i != '-') {
+            number += i;
+          }
+        }
+        if (tempArray.includes(number)) {
+        } else {
+          tempArray.push(number);
+        }
+        number = '';
+      });
+      return {number: tempArray, name: values.displayName};
+    });
+    return contactdata;
+  });
+  return contactData;
 };
 // ============================ get fcm token ==================================
 export const getToken = async () => {
@@ -203,18 +250,17 @@ export const removeProfilePic = ({profilePic, toggleModal}) => {
     .catch(error => console.log(error));
 };
 // ================================ get friends Profile Info ===============================
-export const getFriendsProfileInfo = async ({friendsId,setAllMedia}) => {
+export const getFriendsProfileInfo = async ({friendsId, setAllMedia}) => {
   userid = await AsyncStorage.getItem('userid');
   const media = firestore()
-  .collection('chats')
-  .doc(userid + friendsId)
-  .collection('media')
-  .orderBy('createdAt', 'desc');
+    .collection('chats')
+    .doc(userid + friendsId)
+    .collection('media')
+    .orderBy('createdAt', 'desc');
   media.onSnapshot(querysnapshot => {
     const allmessages = querysnapshot.docs.map(item => {
-    return (item._data)
-      
+      return item._data;
     });
-    setAllMedia(allmessages)
+    setAllMedia(allmessages);
   });
 };

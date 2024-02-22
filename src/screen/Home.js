@@ -31,7 +31,6 @@ const Home = props => {
   const {colors} = useTheme();
   const [allUsers, setAllUser] = useState();
   const [modalData, setModalData] = useState({});
-  const [spinner, setSpinner] = useState(false);
   const [dropdown, setDropDown] = useState(false);
   const [allContactUsers, setAllContactsUser] = useState();
   const [viewProfileModal, setViewProfileModal] = useState(false);
@@ -43,19 +42,16 @@ const Home = props => {
   ];
 
   useEffect(() => {
-    setSpinner(true);
     setTimeout(() => {
       getData();
       // getAllData(setAllUserr);
       getAllContactUserData(setAllContactsUser);
       getToken();
-      setSpinner(false);
     }, 3000);
   }, []);
   const getData = async () => {
     userId = await AsyncStorage.getItem('userid');
   };
-
   // ========================= back handler ============================
   const onbackpress = () => {
     Alert.alert('Hold on!', 'Are you sure you want to exit?', [
@@ -102,7 +98,7 @@ const Home = props => {
           <Text style={{fontSize: 18, color: 'white'}}>Calls</Text>
         </View>
       </View>
-      {spinner && allContactUsers ? (
+      {!allContactUsers ? (
         <View style={{justifyContent: 'center', height: '80%'}}>
           <ActivityIndicator size="large" />
         </View>
@@ -126,14 +122,14 @@ const Home = props => {
                       <Pressable
                         onPress={() => {
                           setModalData({
-                            data: item._data,
+                            data: item,
                           });
                           setViewProfileModal(true);
                         }}>
                         <Image
                           source={
-                            item.data() && item.data().profilePic
-                              ? {uri: item.data().profilePic}
+                            item && item.profilePic
+                              ? {uri: item.profilePic}
                               : require('../../assets/image/unknownprofile.jpg')
                           }
                           style={{
@@ -149,7 +145,7 @@ const Home = props => {
                         onPress={() => {
                           setDropDown(false);
                           props.navigation.navigate('Chats', {
-                            data: item._data,
+                            data: item,
                             id: userId,
                           });
                         }}>
@@ -160,9 +156,7 @@ const Home = props => {
                             marginLeft: 10,
                             color: colors.text,
                           }}>
-                          {item.data().name
-                            ? item.data().name
-                            : item.data().mobile}
+                          {item.name ? item.name : item.mobile}
                         </Text>
                       </TouchableOpacity>
                     </View>

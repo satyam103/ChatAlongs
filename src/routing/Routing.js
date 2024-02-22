@@ -19,8 +19,9 @@ import {ProfilePic, FriendsProfilePic} from '../screen/ProfilePic';
 import Header from '../component/Header';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
 import MediaPage from '../screen/MediaPage';
-import { SendImages } from '../component/ChatSelectitem';
+import { SendDocs, SendImages } from '../component/ChatSelectitem';
 import SendLocation from '../screen/SendLocation';
+import ShareContact from '../screen/ShareContact';
 
 const Routing = () => {
   const Stack = createStackNavigator();
@@ -162,10 +163,19 @@ const Routing = () => {
           name="SendImages"
           component={SendImages}
           options={({route, navigation}) => {}}
+        /><Stack.Screen
+          name="SendDocs"
+          component={SendDocs}
+          options={({route, navigation}) => {}}
         />
         <Stack.Screen
           name="sendLocation"
           component={SendLocation}
+          options={({route, navigation}) => {}}
+        />
+        <Stack.Screen
+          name="shareContact"
+          component={ShareContact}
           options={({route, navigation}) => {}}
         />
       </Stack.Navigator>

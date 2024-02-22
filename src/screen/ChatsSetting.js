@@ -177,7 +177,7 @@ const ChatsSetting = props => {
                     />
                   </Pressable>
                 </View>
-                <Divider bold={true} />
+                {/* <Divider bold={true} /> */}
                 <View style={{flexDirection: 'row', alignSelf: 'flex-end'}}>
                   <Pressable
                     style={{margin: 10}}
