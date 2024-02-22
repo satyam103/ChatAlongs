@@ -5,6 +5,7 @@ import {
   GiftedChat,
   InputToolbar,
   Send,
+  Time,
 } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
@@ -27,7 +28,7 @@ import {
 } from 'react-native';
 // import * as ImagePicker from 'react-native-image-picker';
 import ImagePicker from 'react-native-image-crop-picker';
-
+import Color from 'react-native-gifted-chat/lib/Color';
 import * as DocumentPicker from 'react-native-document-picker';
 import InChatFileTransfer from '../component/InChatFileTransfer';
 import uuid from 'react-native-uuid';
@@ -37,10 +38,19 @@ import {
   getContactSettingData,
 } from '../component/AllFunctions';
 import Geolocation from '@react-native-community/geolocation';
-import {PERMISSIONS, RESULTS, check} from 'react-native-permissions';
+import {
+  PERMISSIONS,
+  RESULTS,
+  check,
+  checkMultiple,
+  request,
+  requestMultiple,
+} from 'react-native-permissions';
+import RNFetchBlob from 'rn-fetch-blob';
+import FileViewer from 'react-native-file-viewer';
 
 const Chats = props => {
-  // console.log(props)
+  // console.log(props?.route?.params);
   const [messages, setMessages] = useState([]);
   const [isAttachImage, setIsAttachImage] = useState(false);
   const [isAttachFile, setIsAttachFile] = useState(false);
@@ -70,6 +80,14 @@ const Chats = props => {
         return {...item._data, createdAt: item._data.createdAt};
       });
       setMessages(allmessages);
+    });
+    check(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
+      console.log(res);
+      if (res === RESULTS.GRANTED) {
+        console.log(res, 'granted');
+      } else {
+        checkPermission();
+      }
     });
   }, []);
   // ======================= get location ============================
@@ -109,24 +127,31 @@ const Chats = props => {
       getCurrentLocation();
       // setLocationEnabled(true);
     });
-    // if (Platform.OS == 'ios') {
-    //   check(PERMISSIONS.IOS.LOCATION_ALWAYS).then(result => {
-    //     if (result === RESULTS.GRANTED) {
-    //       getCurrentLocation();
-    //       // setLocationEnabled(true);
-    //     }
-    //   });
-    // } else {
-    check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
-      if (result === RESULTS.GRANTED) {
-        getCurrentLocation();
-        // setLocationEnabled(true);
+    if (Platform.OS == 'ios') {
+      check(PERMISSIONS.IOS.LOCATION_ALWAYS).then(result => {
+        if (result === RESULTS.GRANTED) {
+          getCurrentLocation();
+          // setLocationEnabled(true);
+        }
+      });
+    } else {
+      check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
+        if (result === RESULTS.GRANTED) {
+          getCurrentLocation();
+          // setLocationEnabled(true);
+        }
+      });
+    }
+  };
+  const checkPermission = () => {
+    request(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
+      console.log(res);
+      if (res === RESULTS.GRANTED) {
+        console.log(res, 'granted');
       }
     });
-    // }
   };
-
-  // ===================== gifted chat components ===========================
+  // ===================== select document ===========================
   const _pickDocument = async () => {
     try {
       const result = await DocumentPicker.pick({
@@ -136,19 +161,40 @@ const Chats = props => {
         allowMultiSelection: true,
       });
       const fileUri = result[0].fileCopyUri;
-      console.log(result);
       console.log('file============+', fileUri);
-      // if (!fileUri) {
-      //   console.log('File URI is undefined or null');
-      //   return;
-      // }
-      // if (fileUri.indexOf('.png') !== -1 || fileUri.indexOf('.jpg') !== -1) {
-      //   setImagePath(fileUri);
-      //   setIsAttachImage(true);
-      // } else {
-      //   setFilePath(fileUri);
-      //   setIsAttachFile(true);
-      // }
+      let tempArray = [];
+      result.forEach((item, index) => {
+        console.log(JSON.stringify(item, null, 2));
+        if (
+          item.type === 'image/jpeg' ||
+          item.type === 'image/jpg' ||
+          item.type === 'image/png'
+        ) {
+          let file = {
+            uri: item.fileCopyUri,
+            fileUri: item.fileCopyUri,
+            size: item.size,
+            name: item.name,
+            imageIndex: index,
+            type: item.type,
+          };
+          tempArray.push(file);
+        } else {
+          let file = {
+            fileUri: item.fileCopyUri,
+            size: item.size,
+            name: item.name,
+            imageIndex: index,
+            type: item.type,
+            uri: 'https://firebasestorage.googleapis.com/v0/b/chatalong-fcc16.appspot.com/o/images%2Fpdf.png?alt=media&token=fb9ea7e3-efd8-4a5e-b0f3-ba31af316a29',
+          };
+          tempArray.push(file);
+        }
+      });
+      props.navigation.navigate('SendDocs', {
+        data: tempArray,
+        userdata: props?.route?.params?.data,
+      });
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled file picker');
@@ -157,6 +203,41 @@ const Chats = props => {
         throw err;
       }
     }
+  };
+  // ========================== view document =============================
+  const downloadDoc = ({fileUri, fileName, fileType}) => {
+    console.log(fileName, fileUri, fileType);
+    let path = RNFetchBlob.fs.dirs.DownloadDir + '/' + fileName;
+    RNFetchBlob.config({
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        path: path,
+        description: 'file download',
+        mime: fileType,
+      },
+    })
+      .fetch('GET', fileUri, {})
+      .progress((received, total) => {
+        console.log('progress', received / total);
+      })
+      .then(res => {
+        console.log('hello', res);
+        FileViewer.open(path, {showOpenWithDialog: true})
+          .then(() => {
+            console.log('File opened successfully', path);
+          })
+          .catch(error => {
+            console.error('Error opening file:', error);
+            alert('Error', 'No app associated with this file type.');
+          });
+        console.log('The file saved to ', res.path());
+        // alert('file downloaded successfully ');
+      })
+      .catch(error => {
+        console.log(error, 'jhknjkjj');
+      });
   };
   // ======================= choose image from gallery =========================
   const selectImage = () => {
@@ -170,7 +251,6 @@ const Chats = props => {
       multiple: true,
     }).then(response => {
       let tempArray = [];
-      console.log('responseimage-------' + response);
       response.forEach((item, index) => {
         let image = {
           uri: item.path,
@@ -178,16 +258,11 @@ const Chats = props => {
           height: item.height,
           imageIndex: index,
         };
-        console.log('imagpath==========' + image);
         tempArray.push(image);
-        console.log('imagpath==========' + tempArray);
       });
       props.navigation.navigate('SendImages', {
         data: tempArray,
-        userdata: {
-          id: props?.route?.params?.data.id,
-          name: props?.route?.params?.data.name,
-        },
+        userdata: props?.route?.params?.data,
       });
     });
   };
@@ -200,21 +275,18 @@ const Chats = props => {
       multiple: true,
     }).then(response => {
       let tempArray = [];
-      console.log('responseimage-------' + response);
-      // response.forEach(item => {
       let image = {
         uri: response.path,
         width: response.width,
         height: response.height,
       };
-      console.log('imagpath==========' + image.uri);
       tempArray.push(image);
-      props.navigation.navigate('SendImages', {data: tempArray});
-      console.log('imagpath==========' + tempArray);
-      // });
+      props.navigation.navigate('SendImages', {
+        data: tempArray,
+        userdata: props?.route?.params?.data,
+      });
     });
   };
-
   const onSend = useCallback(
     async (messages = []) => {
       const msg = messages[0];
@@ -347,30 +419,35 @@ const Chats = props => {
   };
   const renderBubble = props => {
     const {currentMessage} = props;
-    if (currentMessage.file && currentMessage.file.url) {
+    // console.log(currentMessage)
+    if (currentMessage.fileUri && currentMessage.fileName) {
       return (
         <TouchableOpacity
+          onPress={() => downloadDoc(currentMessage)}
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id === 2 ? '#2e64e5' : '#efefef',
-            borderBottomLeftRadius:
-              props.currentMessage.user._id === 2 ? 15 : 5,
-            borderBottomRightRadius:
-              props.currentMessage.user._id === 2 ? 5 : 15,
+              props.currentMessage.user._id ===
+              props?.route?.params?.data?.userid
+                ? '#2e64e5'
+                : Color.defaultBlue,
+            borderRadius: 5,
+            width: '80%',
           }}>
           <InChatFileTransfer
             style={{marginTop: -10}}
-            filePath={currentMessage.file.url}
+            filePath={currentMessage.fileName}
           />
           <View style={{flexDirection: 'column'}}>
-            <Text
-              style={{
-                ...styles.fileText,
-                color: currentMessage.user._id === 2 ? 'white' : 'black',
-              }}>
-              {currentMessage.text}
-            </Text>
+            <Time
+              currentMessage={currentMessage}
+              position={
+                props.currentMessage.user._id ===
+                props?.route?.params?.data?.userid
+                  ? 'left'
+                  : 'right'
+              }
+            />
           </View>
         </TouchableOpacity>
       );
@@ -512,7 +589,7 @@ const Chats = props => {
               style={{
                 color: 'white',
                 marginHorizontal: 8,
-                fontSize: 24,
+                fontSize: 20,
               }}>
               {props.route.params.data.name}
             </Text>
@@ -717,6 +794,10 @@ const Chats = props => {
                       paddingVertical: 10,
                     }}>
                     <Pressable
+                      onPress={() => {
+                        setModalVisible(false);
+                        props.navigation.navigate('shareContact');
+                      }}
                       style={{
                         alignItems: 'center',
                       }}>
@@ -735,9 +816,9 @@ const Chats = props => {
                       <Text>Contact</Text>
                     </Pressable>
                     <Pressable
-                      onPress={()=> {
-                        setModalVisible(false)
-                        props.navigation.navigate('sendLocation')
+                      onPress={() => {
+                        setModalVisible(false);
+                        props.navigation.navigate('sendLocation');
                       }}
                       style={{
                         alignItems: 'center',
