@@ -24,14 +24,11 @@ import {
   TouchableOpacity,
   Modal,
   TouchableWithoutFeedback,
-  PermissionsAndroid,
 } from 'react-native';
-// import * as ImagePicker from 'react-native-image-picker';
 import ImagePicker from 'react-native-image-crop-picker';
 import Color from 'react-native-gifted-chat/lib/Color';
 import * as DocumentPicker from 'react-native-document-picker';
-import InChatFileTransfer from '../component/InChatFileTransfer';
-import uuid from 'react-native-uuid';
+import {InChatContactTransfer, InChatFileTransfer} from '../component/InChatFileTransfer';
 import Dropdown, {RenderDropdown} from '../component/Dropdown';
 import {
   getAllSettingData,
@@ -81,9 +78,12 @@ const Chats = props => {
       });
       setMessages(allmessages);
     });
-    check(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
+    check(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES).then(res => {
       console.log(res);
       if (res === RESULTS.GRANTED) {
+        check(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
+          console.log(res, 'media location');
+        });
         console.log(res, 'granted');
       } else {
         checkPermission();
@@ -452,6 +452,27 @@ const Chats = props => {
         </TouchableOpacity>
       );
     }
+    if (currentMessage.contactDetail) {
+      return (
+        <View
+          style={{
+            ...styles.fileContainer,
+            backgroundColor:
+              props.currentMessage.user._id ===
+              props?.route?.params?.data?.userid
+                ? '#2e64e5'
+                : Color.defaultBlue,
+            borderRadius: 5,
+            width: '80%',
+          }}>
+          <InChatContactTransfer
+            style={{marginTop: -10}}
+            currentMessage={currentMessage}
+            userdata = {props?.route?.params?.data?.userid}
+          />
+        </View>
+      );
+    }
     return (
       <Bubble
         {...props}
@@ -796,7 +817,9 @@ const Chats = props => {
                     <Pressable
                       onPress={() => {
                         setModalVisible(false);
-                        props.navigation.navigate('shareContact');
+                        props.navigation.navigate('shareContact', {
+                          userdata: props?.route?.params?.data,
+                        });
                       }}
                       style={{
                         alignItems: 'center',

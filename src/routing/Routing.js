@@ -16,10 +16,9 @@ import ChatWallpaper from '../screen/ChatWallpaper';
 import Wallpaper from '../screen/Wallpaper';
 import CallingPage from '../screen/CallingPage';
 import {ProfilePic, FriendsProfilePic} from '../screen/ProfilePic';
-import Header from '../component/Header';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
 import MediaPage from '../screen/MediaPage';
-import { SendDocs, SendImages } from '../component/ChatSelectitem';
+import { SendContact, SendDocs, SendImages } from '../component/ChatSelectitem';
 import SendLocation from '../screen/SendLocation';
 import ShareContact from '../screen/ShareContact';
 
@@ -163,7 +162,8 @@ const Routing = () => {
           name="SendImages"
           component={SendImages}
           options={({route, navigation}) => {}}
-        /><Stack.Screen
+        />
+        <Stack.Screen
           name="SendDocs"
           component={SendDocs}
           options={({route, navigation}) => {}}
@@ -176,6 +176,11 @@ const Routing = () => {
         <Stack.Screen
           name="shareContact"
           component={ShareContact}
+          options={({route, navigation}) => {}}
+        />
+        <Stack.Screen
+          name="sendContact"
+          component={SendContact}
           options={({route, navigation}) => {}}
         />
       </Stack.Navigator>
