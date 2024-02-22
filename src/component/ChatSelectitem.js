@@ -11,6 +11,10 @@ import uuid from 'react-native-uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
+import Header from './Header';
+import {ScrollView} from 'react-native-gesture-handler';
+import {Image} from 'react-native';
+import {CheckBox} from 'react-native-elements';
 
 let userid = '';
 const SendImages = props => {
@@ -393,7 +397,9 @@ const SendDocs = props => {
             <Ionicons name="arrow-back" size={20} color={'white'} />
           </TouchableOpacity>
           <View>
-            <Text style={{fontSize:18,color:'white'}}>{props?.route?.params?.data[imageIndex]?.name}</Text>
+            <Text style={{fontSize: 18, color: 'white'}}>
+              {props?.route?.params?.data[imageIndex]?.name}
+            </Text>
           </View>
         </View>
       </View>
@@ -544,4 +550,195 @@ const SendDocs = props => {
   );
 };
 
-export {SendImages, SendDocs};
+const SendContact = props => {
+  useEffect(() => {
+    const getUserid = async () => {
+      userid = await AsyncStorage.getItem('userid');
+    };
+    getUserid();
+  });
+  const onSend = data => {
+    let mymsg = {};
+    data.forEach(async element => {
+      console.log(element);
+      let date = new Date();
+      let id = uuid.v4();
+      try {
+        mymsg = {
+          _id: id,
+          contactDetail: element,
+          createdAt: Date.parse(date),
+          sendBy: userid,
+          sendTo: props?.route?.params?.userdata?.userid,
+          user: {
+            _id: userid,
+          },
+        };
+        firestore()
+          .collection('chats')
+          .doc('' + userid + props?.route?.params?.userdata?.userid)
+          .collection('messages')
+          .add(mymsg);
+        firestore()
+          .collection('chats')
+          .doc('' + props?.route?.params?.userdata?.userid + userid)
+          .collection('messages')
+          .add(mymsg);
+        firestore()
+          .collection('chats')
+          .doc('' + userid + props?.route?.params?.userdata?.userid)
+          .collection('contact')
+          .add(mymsg);
+        firestore()
+          .collection('chats')
+          .doc('' + props.route?.params?.userdata?.userid + userid)
+          .collection('contact')
+          .add(mymsg);
+        console.log(mymsg);
+        props.navigation.navigate('Chats', {
+          data: props?.route?.params?.userdata,
+          id: userid,
+        });
+      } catch (error) {
+        console.log(error, '=========sending contact');
+      }
+    });
+  };
+
+  return (
+    <View>
+      <Header title={'Select Contact'} />
+      <Formik
+        initialValues={{data: [...props?.route?.params?.data]}}
+        onSubmit={(values, action) => {
+          onSend(values.data);
+        }}>
+        {({handleSubmit, handleChange, values}) => (
+          <>
+            <ScrollView
+              style={{
+                height: '90%',
+                padding: 5,
+              }}>
+              {values.data.map((item, index) => {
+                return (
+                  <View
+                    style={{
+                      marginBottom: 5,
+                      elevation: 5,
+                      backgroundColor: 'rgb(255,255,255)',
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        margin: 5,
+                        paddingBottom: 10,
+                        alignItems: 'center',
+                        borderBottomWidth: 0.5,
+                        borderBottomColor: 'rgba(0,0,0,0.5)',
+                      }}>
+                      <View>
+                        <Image
+                          source={require('../../assets/image/unknownprofile.jpg')}
+                          style={{
+                            height: 50,
+                            width: 50,
+                          }}
+                        />
+                      </View>
+                      <View
+                        style={{
+                          marginLeft: 10,
+                        }}>
+                        <Text style={{color: 'black', fontSize: 18}}>
+                          {item.name}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        marginBottom: 10,
+                        marginLeft: 10,
+                        marginRight: 10,
+                      }}>
+                      {item.number.map((number, idx) => {
+                        return (
+                          <View
+                            style={{
+                              margin: 5,
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                            }}>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                              }}>
+                              <Ionicons name="call" size={20} color={'green'} />
+                              <View>
+                                <Text
+                                  style={{
+                                    color: 'black',
+                                    fontSize: 18,
+                                    fontWeight: 'bold',
+                                    marginLeft: 15,
+                                  }}>
+                                  {number}
+                                </Text>
+                                <Text
+                                style={{
+                                  color: 'black',
+                                  fontSize: 14,
+                                  marginLeft: 15,
+                                }}>Mobile</Text>
+                              </View>
+                            </View>
+                            {/* <CheckBox
+                              checked={
+                                values.data[index].checked[idx] === false
+                                  ? false
+                                  : true
+                              }
+                              checkedColor="green"
+                              onPress={() => {
+                                values.data[index].checked[idx] === false
+                                  ? (values.data[index].checked[idx] = true)
+                                  : (values.data[index].checked[idx] = false);
+                                console.log(values.data[index].checked[idx]);
+                              }}
+                            /> */}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+              <View
+                style={{
+                  height: 90,
+                }}></View>
+            </ScrollView>
+            <Pressable
+              onPress={() => handleSubmit()}
+              style={{
+                height: 55,
+                width: 55,
+                borderRadius: 20,
+                backgroundColor: 'green',
+                position: 'absolute',
+                bottom: 15,
+                right: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <FontAwesome name="send" size={25} color={'white'} />
+            </Pressable>
+          </>
+        )}
+      </Formik>
+    </View>
+  );
+};
+
+export {SendImages, SendDocs, SendContact};

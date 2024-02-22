@@ -95,7 +95,10 @@ const ShareContact = props => {
               />
             </View>
           )}
-          <ScrollView style={selectedContact.length >0 ? {height: '80%'}:{height:'92%'}}>
+          <ScrollView
+            style={
+              selectedContact.length > 0 ? {height: '80%'} : {height: '92%'}
+            }>
             {allUserContacts &&
               allUserContacts.map((element, index) => {
                 return (
@@ -138,6 +141,12 @@ const ShareContact = props => {
           </ScrollView>
           {selectedContact.length > 0 && (
             <Pressable
+              onPress={() =>
+                props.navigation.navigate('sendContact', {
+                  data: selectedContact,
+                  userdata:props?.route?.params?.userdata
+                })
+              }
               style={{
                 height: 50,
                 width: 70,
