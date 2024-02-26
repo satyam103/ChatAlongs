@@ -21,6 +21,7 @@
     "@react-native-google-signin/google-signin": "^10.1.1",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/stack": "^6.3.20",
+    "@reduxjs/toolkit": "^2.2.1",
     "@zegocloud/zego-uikit-prebuilt-call-rn": "^4.4.0",
     "@zegocloud/zego-uikit-rn": "^2.6.0",
     "agora-react-native-rtm": "^1.5.1",
@@ -45,6 +46,7 @@
     "react-native-keep-awake": "^4.0.0",
     "react-native-lightbox-v2": "^0.9.0",
     "react-native-maps": "^1.10.3",
+    "react-native-open-maps": "^0.4.3",
     "react-native-paper": "^5.11.4",
     "react-native-permissions": "^4.1.2",
     "react-native-reanimated": "^2.17.0",
@@ -54,6 +56,7 @@
     "react-native-sound": "^0.11.2",
     "react-native-uuid": "^2.0.1",
     "react-native-vector-icons": "^10.0.2",
+    "react-redux": "^9.1.0",
     "rn-fetch-blob": "^0.12.0",
     "yup": "^1.3.2",
     "zego-express-engine-reactnative": "^3.2.0"

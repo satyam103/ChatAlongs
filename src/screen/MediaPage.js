@@ -4,7 +4,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImageView from 'react-native-image-viewing';
 
 const MediaPage = props => {
-  console.log(props?.route?.params?.data);
+  // console.log(props?.route?.params?.data[props?.route?.params?.imageIndex]?.image);
   const headerComponent = () => {
     return (
       <View
@@ -28,11 +28,16 @@ const MediaPage = props => {
         </View>
       </View>
     );
-  };  
+  };
   const footerComponent = () => {
     return (
       <View
-        style={{height: 80, backgroundColor:'rgba(0,0,0,0)', width: '100%', alignItems: 'center'}}>
+        style={{
+          height: 80,
+          backgroundColor: 'rgba(0,0,0,0)',
+          width: '100%',
+          alignItems: 'center',
+        }}>
         <Text>{props?.route?.params?.data?.text}</Text>
       </View>
     );
@@ -47,13 +52,11 @@ const MediaPage = props => {
             alignContent: 'center',
             justifyContent: 'center',
           },
-        ]}> 
+        ]}>
         <ImageView
           HeaderComponent={headerComponent}
           FooterComponent={footerComponent}
-          images={
-            props?.route?.params?.data
-          }
+          images={[{uri:props?.route?.params?.data[props?.route?.params?.imageIndex]?.image}]}
           imageIndex={props?.route?.params?.imageIndex}
           swipeToCloseEnabled={true}
           visible={true}

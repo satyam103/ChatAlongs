@@ -28,7 +28,11 @@ import {
 import ImagePicker from 'react-native-image-crop-picker';
 import Color from 'react-native-gifted-chat/lib/Color';
 import * as DocumentPicker from 'react-native-document-picker';
-import {InChatContactTransfer, InChatFileTransfer} from '../component/InChatFileTransfer';
+import {
+  InChatContactTransfer,
+  InChatCurrentLocation,
+  InChatFileTransfer,
+} from '../component/InChatFileTransfer';
 import Dropdown, {RenderDropdown} from '../component/Dropdown';
 import {
   getAllSettingData,
@@ -45,7 +49,9 @@ import {
 } from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+let userid = '';
 const Chats = props => {
   // console.log(props?.route?.params);
   const [messages, setMessages] = useState([]);
@@ -65,6 +71,10 @@ const Chats = props => {
       props.route.params.data.userid,
       setContactChatSetting,
     );
+    const getUserid = async () => {
+      userid = await AsyncStorage.getItem('userid');
+    };
+    getUserid();
   });
   useEffect(() => {
     const subscriber = firestore()
@@ -350,6 +360,7 @@ const Chats = props => {
           sendBy: props.route.params.id,
           sendTo: props.route.params.data.userid,
           createdAt: Date.parse(msg.createdAt),
+          sent: true,
         };
         setMessages(previousMessages =>
           GiftedChat.append(previousMessages, mymsg),
@@ -365,8 +376,31 @@ const Chats = props => {
         .doc('' + props.route.params.data.userid + props.route.params.id)
         .collection('messages')
         .add(mymsg);
+      fetch(
+        'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1',
+        {
+          method: 'POST',
+          'Content-Type': 'application/json',
+          body: {
+            message: {
+              token:
+                'c5G0mwYkSsKxNHg3Ce-Gev:APA91bE2x42JhfiR2RHHwhEL0Wv9fFZjI0tbyCcGVAhD1p2CRyFtaPGuIXiKZuMEJAIcGzldLDhXIsgzXjVPatMbU9QJ1mb_p2HPaZDH_LAqLjIGW2tOVnu1fohyYLT8GAxLYalzG-Yo',
+              notification: {
+                body: 'This is an FCM notification message!',
+                title: 'FCM Message',
+              },
+            },
+          },
+        },
+      )
+        .then(res => {
+          console.log(res, '=================fcm res');
+        })
+        .catch(error => {
+          console.log(error, '============fcm error');
+        });
     },
-    [filePath, imagePath, isAttachFile, isAttachImage],
+    [filePath],
   );
   const renderChatFooter = useCallback(() => {
     if (imagePath) {
@@ -419,33 +453,31 @@ const Chats = props => {
   };
   const renderBubble = props => {
     const {currentMessage} = props;
-    // console.log(currentMessage)
     if (currentMessage.fileUri && currentMessage.fileName) {
+      console.log(props.currentMessage.user._id === userid);
       return (
         <TouchableOpacity
           onPress={() => downloadDoc(currentMessage)}
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id ===
-              props?.route?.params?.data?.userid
-                ? '#2e64e5'
-                : Color.defaultBlue,
+              props.currentMessage.user._id === userid
+                ? Color.defaultBlue
+                : 'rgba(255,255,255,1)',
             borderRadius: 5,
             width: '80%',
+            marginLeft: 10,
           }}>
           <InChatFileTransfer
             style={{marginTop: -10}}
-            filePath={currentMessage.fileName}
+            currentMessage={currentMessage}
+            userdata={userid}
           />
-          <View style={{flexDirection: 'column'}}>
+          <View>
             <Time
               currentMessage={currentMessage}
               position={
-                props.currentMessage.user._id ===
-                props?.route?.params?.data?.userid
-                  ? 'left'
-                  : 'right'
+                props.currentMessage.user._id === userid ? 'right' : 'left'
               }
             />
           </View>
@@ -458,18 +490,52 @@ const Chats = props => {
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id ===
-              props?.route?.params?.data?.userid
-                ? '#2e64e5'
-                : Color.defaultBlue,
+              props.currentMessage.user._id === userid
+                ? Color.defaultBlue
+                : 'rgba(255,255,255,1)',
             borderRadius: 5,
             width: '80%',
+            marginLeft: 10,
           }}>
           <InChatContactTransfer
             style={{marginTop: -10}}
             currentMessage={currentMessage}
-            userdata = {props?.route?.params?.data?.userid}
+            userdata={userid}
           />
+        </View>
+      );
+    }
+    if (currentMessage.location) {
+      return (
+        <View
+          style={{
+            ...styles.fileContainer,
+            backgroundColor:
+              props.currentMessage.user._id === userid
+                ? Color.defaultBlue
+                : 'rgba(255,255,255,1)',
+            borderRadius: 5,
+            maxWidth: '80%',
+            marginLeft: 10,
+          }}>
+          <InChatCurrentLocation
+            style={{marginTop: -10}}
+            currentMessage={currentMessage}
+            userdata={userid}
+          />
+          <View>
+            <Time
+              currentMessage={currentMessage}
+              position={
+                props.currentMessage.user._id === userid ? 'right' : 'left'
+              }
+              containerStyle={{
+                left: StyleSheet.create({
+                  marginLeft: 10,
+                }),
+              }}
+            />
+          </View>
         </View>
       );
     }
@@ -746,7 +812,6 @@ const Chats = props => {
                         _pickDocument();
                       }}
                       style={{
-                        alignItems: 'center',
                       }}>
                       <View
                         style={{
@@ -755,12 +820,14 @@ const Chats = props => {
                           justifyContent: 'center',
                           alignItems: 'center',
                           borderRadius: 50,
-                          marginRight: 15,
+                          marginHorizontal: 5,
                           backgroundColor: 'rgb(125,105,235)',
                         }}>
                         <Ionicons name="document" size={22} color={'white'} />
                       </View>
-                      <Text>Document</Text>
+                      <View>
+                        <Text>Document</Text>
+                      </View>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -778,7 +845,7 @@ const Chats = props => {
                           alignItems: 'center',
                           borderRadius: 50,
                           backgroundColor: 'rgb(215,25,25)',
-                          marginHorizontal: 15,
+                          marginHorizontal: 20,
                         }}>
                         <Ionicons name="camera" size={22} color={'white'} />
                       </View>
@@ -799,7 +866,7 @@ const Chats = props => {
                           justifyContent: 'center',
                           alignItems: 'center',
                           borderRadius: 50,
-                          marginLeft: 15,
+                          marginHorizontal: 5,
                           backgroundColor: 'rgb(205,65,255)',
                         }}>
                         <FontAwesome name="photo" size={22} color={'white'} />
@@ -831,7 +898,7 @@ const Chats = props => {
                           justifyContent: 'center',
                           alignItems: 'center',
                           borderRadius: 50,
-                          marginRight: 15,
+                          marginHorizontal: 5,
                           backgroundColor: 'aqua',
                         }}>
                         <Ionicons name="person" size={22} color={'white'} />
@@ -841,7 +908,10 @@ const Chats = props => {
                     <Pressable
                       onPress={() => {
                         setModalVisible(false);
-                        props.navigation.navigate('sendLocation');
+                        props.navigation.navigate('sendLocation', {
+                          userdata: props?.route?.params?.data,
+                          setMessages: setMessages,
+                        });
                       }}
                       style={{
                         alignItems: 'center',

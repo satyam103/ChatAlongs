@@ -15,7 +15,7 @@ const FriendsProfilePage = props => {
   );
   const [allMedia, setAllMedia] = useState();
   const {colors} = useTheme();
-  console.log(props.route.params, '=======================friendprofile');
+  // console.log(props.route.params, '=======================friendprofile');
   useEffect(() => {
     getData();
     getFriendsProfileInfo({
@@ -26,7 +26,7 @@ const FriendsProfilePage = props => {
   const getData = async () => {
     userid = await AsyncStorage.getItem('userid');
   };
-  console.log(userid);
+  // console.log(userid);
   return (
     <View>
       <View
@@ -153,7 +153,8 @@ const FriendsProfilePage = props => {
             style={{
               height: 150,
               width: '100%',
-              backgroundColor: '',
+              backgroundColor: 'white',
+              marginHorizontal: 5,
               paddingVertical: 10,
               paddingHorizontal: 10,
             }}>
@@ -190,25 +191,30 @@ const FriendsProfilePage = props => {
               data={allMedia}
               initialNumToRender={10}
               showsHorizontalScrollIndicator={false}
-              renderItem={item => (
-                <Pressable
-                  onPress={() =>
-                    props.navigation.navigate('MediaPage', {
-                      imageIndex: item.index,
-                      data: allMedia,
-                    })
-                  }
-                  style={{
-                    backgroundColor: 'white',
-                    height: 100,
-                    width: 100,
-                    borderRadius: 15,
-                    padding: 5,
-                    marginRight: 5,
-                  }}>
-                  <Image source={{uri: item?.image}} />
-                </Pressable>
-              )}
+              renderItem={item => {
+                console.log(item)
+                return (
+                  <Pressable
+                    onPress={() =>
+                      props.navigation.navigate('MediaPage', {
+                        imageIndex: item.index,
+                        data: allMedia,
+                      })
+                    }
+                    style={{
+                      height: 100,
+                      width: 100,
+                      borderRadius: 15,
+                      padding: 5,
+                      marginRight: 5,
+                    }}>
+                    <Image
+                      style={{height: 100, width: 100, borderRadius: 15}}
+                      source={{uri: item?.item?.image}}
+                    />
+                  </Pressable>
+                );
+              }}
             />
           </View>
         )}

@@ -38,6 +38,9 @@ const Routing = () => {
   });
   const checkLogin = async () => {
     const userid = await AsyncStorage.getItem('userid');
+    if (userid) {
+      navigation.navigate('Home');
+    }
     setLoggedin(userid);
   };
 
