@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {ActivityIndicator, ImageBackground, Pressable, Text, View} from 'react-native';
+import {ImageBackground, Pressable, Text, View} from 'react-native';
 import LoginModal from '../component/LoginModal';
 
 

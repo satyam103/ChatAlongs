@@ -1,21 +1,32 @@
 import Geolocation from '@react-native-community/geolocation';
 import React, {useEffect, useState} from 'react';
-import {Pressable, Text} from 'react-native';
+import {Pressable, Share, Text} from 'react-native';
 import {TouchableOpacity} from 'react-native';
 import {SafeAreaView, View} from 'react-native';
 import MapView from 'react-native-maps';
 import {PERMISSIONS, RESULTS, check} from 'react-native-permissions';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import { useTheme } from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
+import uuid from 'react-native-uuid';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {GiftedChat} from 'react-native-gifted-chat';
+import {Image} from 'react-native';
 
+let userid = '';
 const SendLocation = props => {
-  // console.log(props)
+  console.log(props.route.params);
   const [userLatitude, setUserLatitude] = useState(null);
   const [userLongitude, setUserLongitude] = useState(null);
-    const {colors} = useTheme()
+  const [mapSnapshot, setMapshot] = useState();
+  const {colors} = useTheme();
   useEffect(() => {
     getCurrentLocation();
+    const getUserid = async () => {
+      userid = await AsyncStorage.getItem('userid');
+    };
+    getUserid();
   });
   // ======================= get location ============================
   const getCurrentLocation = () => {
@@ -28,6 +39,7 @@ const SendLocation = props => {
               setUserLatitude(initialPosition?.coords?.latitude);
               setUserLongitude(initialPosition?.coords?.longitude);
             }
+            // console.log(position);
           },
           error => console.log('Error', JSON.stringify(error)),
           {enableHighAccuracy: false, timeout: 20000},
@@ -49,12 +61,48 @@ const SendLocation = props => {
         }
       });
     } else {
-    check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
-      if (result === RESULTS.GRANTED) {
-        getCurrentLocation();
-      }
-    });
+      check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION).then(result => {
+        if (result === RESULTS.GRANTED) {
+          getCurrentLocation();
+        }
+      });
     }
+  };
+
+  const oncurrentlocationShare = () => {
+    let mymsg = {};
+    let date = new Date();
+    let id = uuid.v4();
+    mymsg = {
+      _id: id,
+      createdAt: Date.parse(date),
+      location: {
+        latitude: userLatitude,
+        longitude: userLongitude,
+      },
+      sendBy: userid,
+      sendTo: props?.route?.params?.userdata?.userid,
+      user: {
+        _id: userid,
+      },
+    };
+    props?.route?.params?.setMessages(previousMessages =>
+      GiftedChat.append(previousMessages, mymsg),
+    );
+    firestore()
+      .collection('chats')
+      .doc('' + userid + props?.route?.params?.userdata?.userid)
+      .collection('messages')
+      .add(mymsg);
+    firestore()
+      .collection('chats')
+      .doc('' + props?.route?.params?.userdata?.userid + userid)
+      .collection('messages')
+      .add(mymsg);
+    props.navigation.navigate('Chats', {
+      data: props?.route?.params?.userdata,
+      id: userid,
+    });
   };
 
   return (
@@ -85,7 +133,9 @@ const SendLocation = props => {
                 fontSize: 20,
                 marginLeft: 10,
                 fontWeight: 'bold',
-              }}>Send Location</Text>
+              }}>
+              Send Location
+            </Text>
           </View>
         </View>
         <View
@@ -101,8 +151,8 @@ const SendLocation = props => {
             showsCompass={true}
             rotateEnabled={false}
             region={{
-              latitude: userLatitude,
-              longitude: userLongitude,
+              latitude: userLatitude && userLatitude,
+              longitude: userLongitude && userLongitude,
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}></MapView>
@@ -129,12 +179,19 @@ const SendLocation = props => {
               }}>
               <FontAwesome6 name="location-dot" size={24} color={'white'} />
             </View>
-            <View style={{marginLeft:5}}>
-                <Text style={{color:colors.text,fontSize:16,fontWeight:'bold'}}>Share Live Location</Text>
-                <Text style={{color:colors.text,fontSize:14,}}>for 1hr</Text>
+            <View style={{marginLeft: 5}}>
+              <Text
+                style={{color: colors.text, fontSize: 16, fontWeight: 'bold'}}>
+                Share Live Location
+              </Text>
+              <Text style={{color: colors.text, fontSize: 14}}>for 1hr</Text>
             </View>
           </Pressable>
           <Pressable
+            onPress={() => {
+              getCurrentLocation();
+              oncurrentlocationShare();
+            }}
             style={{
               height: 70,
               flexDirection: 'row',
@@ -151,13 +208,24 @@ const SendLocation = props => {
                 marginHorizontal: 10,
                 borderRadius: 50,
               }}>
-              <FontAwesome6 name="location-crosshairs" size={24} color={'white'} />
+              <FontAwesome6
+                name="location-crosshairs"
+                size={24}
+                color={'white'}
+              />
             </View>
-            <View style={{marginLeft:5}}>
-                <Text style={{color:colors.text,fontSize:16,fontWeight:'bold'}}>Share current location</Text>
+            <View style={{marginLeft: 5}}>
+              <Text
+                style={{color: colors.text, fontSize: 16, fontWeight: 'bold'}}>
+                Share current location
+              </Text>
             </View>
           </Pressable>
+          {/* <TouchableOpacity onPress={takeSnapshot}>
+            <Text style={{color: 'black'}}>shoot</Text>
+          </TouchableOpacity> */}
         </View>
+        {/* <Image source={{uri: mapSnapshot?.uri}} /> */}
       </View>
     </SafeAreaView>
   );

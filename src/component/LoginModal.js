@@ -20,6 +20,8 @@ import {
   GoogleSignin,
   GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
+import {useDispatch} from 'react-redux';
+import {addUserdata} from '../redux/slice/Userslice';
 
 // import {
 //   getAuth,
@@ -33,8 +35,7 @@ const loginSchema = yup.object({
   name: yup.string().required(),
 });
 const LoginModal = props => {
-  // const auth = getAuth();
-
+  const dispatch = useDispatch();
   const [loginData, setLoginData] = useState();
   const [loading, setLoading] = useState(false);
 
@@ -68,11 +69,11 @@ const LoginModal = props => {
   };
 
   async function signinWithPhoneNumber(phoneNumber) {
-    console.log(phoneNumber+"jhhklk")
+    console.log(phoneNumber + 'jhhklk');
     // setLoading(true);
     const confirmation = await auth().verifyPhoneNumber(phoneNumber);
-    console.log(confirmation+"=====================")
-    console.log(phoneNumber+"jhhklk")
+    console.log(confirmation + '=====================');
+    console.log(phoneNumber + 'jhhklk');
     // setLoading(false);
     setConfirm(confirmation);
   }
@@ -80,7 +81,7 @@ const LoginModal = props => {
   async function confirmCode() {
     try {
       await confirm.confirm(code);
-      console.log("object")
+      console.log('object');
       // loginUser(loginData);
     } catch (error) {
       console.log('Invalid code.');
@@ -95,6 +96,7 @@ const LoginModal = props => {
       .get()
       .then(res => {
         if (res.docs[0]) {
+          dispatch(addUserdata(res.docs[0]._data));
           goToNext(
             res.docs[0].data().mobile,
             res.docs[0].data().userid,
@@ -111,6 +113,13 @@ const LoginModal = props => {
               userid: userid,
             })
             .then(res => {
+              dispatch(
+                addUserdata({
+                  name: name,
+                  mobile: mobile,
+                  userid: userid,
+                }),
+              );
               goToNext(mobile, userid, name);
             })
             .catch(error => console.log(error));

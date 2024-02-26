@@ -11,11 +11,13 @@ import {
   NavigationContainer,
 } from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
-import { StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
 import Routing from './src/routing/Routing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firestore from '@react-native-firebase/firestore';
 import {PermissionsAndroid} from 'react-native';
+import {Provider} from 'react-redux';
+import store from './src/redux/store/Store';
 
 //
 function App() {
@@ -35,34 +37,40 @@ function App() {
     getPermission();
   });
 
-  const getPermission = () => {[
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CONTACTS)
-      .then(res => {
-        console.log('Permission: ', res);
-      })
-      .catch(error => {
-        console.error('Permission error: ', error);
-      }),
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
-      .then(res => {
-        console.log('Permission: ', res);
-      })
-      .catch(error => {
-        console.error('Permission error: ', error);
-      }),
-    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES)
-      .then(res => {
-        console.log('Permission: ', res);
-      })
-      .catch(error => {
-        console.error('Permission error: ', error);
-      })]
+  const getPermission = () => {
+    [
+      PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_CONTACTS)
+        .then(res => {
+          console.log('Permission: ', res);
+        })
+        .catch(error => {
+          console.error('Permission error: ', error);
+        }),
+      PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
+        .then(res => {
+          console.log('Permission: ', res);
+        })
+        .catch(error => {
+          console.error('Permission error: ', error);
+        }),
+      PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+      )
+        .then(res => {
+          console.log('Permission: ', res);
+        })
+        .catch(error => {
+          console.error('Permission error: ', error);
+        }),
+    ];
   };
   const appTheme = theme == 'Dark' ? DarkTheme : DefaultTheme;
   return (
-    <NavigationContainer theme={appTheme}>
-      <Routing />
-    </NavigationContainer>
+    <Provider store={store}>
+      <NavigationContainer theme={appTheme}>
+        <Routing />
+      </NavigationContainer>
+    </Provider>
   );
 }
 

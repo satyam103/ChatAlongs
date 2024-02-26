@@ -146,7 +146,7 @@ export const getAllContact = async () => {
   return contactData;
 };
 // ============================ get fcm token ==================================
-export const getToken = async () => {
+export const  getToken = async () => {
   let fcmToken = await AsyncStorage.getItem('fcmToken');
   console.log('old token', fcmToken);
   if (!fcmToken) {

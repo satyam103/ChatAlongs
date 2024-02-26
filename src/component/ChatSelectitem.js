@@ -560,10 +560,10 @@ const SendContact = props => {
   const onSend = data => {
     let mymsg = {};
     data.forEach(async element => {
-      console.log(element);
       let date = new Date();
       let id = uuid.v4();
       try {
+        console.log(element)
         mymsg = {
           _id: id,
           contactDetail: element,
