@@ -12,14 +12,37 @@ import {
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Header from '../component/Header';
-import Contact from 'react-native-contacts';
 import {getNonUserContactData} from '../component/AllFunctions';
 import {useTheme} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
 const ShareContact = props => {
   const [allUserContacts, setAllUserContacts] = useState();
   const [selectedContact, setSelectedContact] = useState([]);
   const selectedContactRef = useRef();
+  const contact = useSelector(state => state.user.allContacts);
+  console.log(allUserContacts, '====================', contact);
+  const allContact = () => {
+    const filteredData = contact.filter(values => {
+      const tempArray = [];
+      // console.log(values)
+      values.number.forEach(element => {
+        // const present = newData.find(value => {
+        //   return value === element && value;
+        // });
+        // if (present === undefined) {
+        tempArray.push({name: values.name, number: element});
+        // }
+        return values.number;
+      });
+      return tempArray;
+    });
+    const strAscending = [...filteredData].sort((a, b) =>
+      a.name > b.name ? 1 : -1,
+    );
+    console.log(contact, '==============dkfkklmf');
+    // console.log(strAscending,'sklnklsnfjnjknk')
+  };
   const {colors} = useTheme();
   useEffect(() => {
     setTimeout(() => {
@@ -144,7 +167,7 @@ const ShareContact = props => {
               onPress={() =>
                 props.navigation.navigate('sendContact', {
                   data: selectedContact,
-                  userdata:props?.route?.params?.userdata
+                  userdata: props?.route?.params?.userdata,
                 })
               }
               style={{

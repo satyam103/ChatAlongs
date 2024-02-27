@@ -11,19 +11,19 @@ import {Slider} from 'react-native-elements';
 import {useTheme} from '@react-navigation/native';
 import {Image} from 'react-native';
 import {
-  getAllSettingData,
   getContactSettingData,
 } from '../component/AllFunctions';
+import { useSelector } from 'react-redux';
 
 let userid = '';
 let collection = '';
 const ChatWallpaper = props => {
   const [bgImage, setBgImage] = useState();
-  const [allSetting, setAllSetting] = useState();
   const [contactSettingData, setContactSettingData] = useState();
   const [opacityValue, setOpacityValue] = useState(0);
   const [friendsdata, setFriendsdata] = useState();
   const {colors} = useTheme();
+  const allSetting = useSelector(state=>state.user.setting)
 
   useEffect(() => {
     const getData = async () => {
@@ -38,7 +38,6 @@ const ChatWallpaper = props => {
 
       props?.route?.params?.item?.data &&
       getContactSettingData(friendsdata?.userid, setContactSettingData);
-    getAllSettingData(setAllSetting);
     getData();
   });
 

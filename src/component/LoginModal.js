@@ -96,7 +96,6 @@ const LoginModal = props => {
       .get()
       .then(res => {
         if (res.docs[0]) {
-          dispatch(addUserdata(res.docs[0]._data));
           goToNext(
             res.docs[0].data().mobile,
             res.docs[0].data().userid,
@@ -113,13 +112,6 @@ const LoginModal = props => {
               userid: userid,
             })
             .then(res => {
-              dispatch(
-                addUserdata({
-                  name: name,
-                  mobile: mobile,
-                  userid: userid,
-                }),
-              );
               goToNext(mobile, userid, name);
             })
             .catch(error => console.log(error));

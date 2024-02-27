@@ -8,7 +8,6 @@ import {
   Time,
 } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome1 from 'react-native-vector-icons/FontAwesome5';
@@ -34,52 +33,34 @@ import {
   InChatFileTransfer,
 } from '../component/InChatFileTransfer';
 import Dropdown, {RenderDropdown} from '../component/Dropdown';
-import {
-  getAllSettingData,
-  getContactSettingData,
-} from '../component/AllFunctions';
+import {getContactSettingData, sendNotification} from '../component/AllFunctions';
 import Geolocation from '@react-native-community/geolocation';
-import {
-  PERMISSIONS,
-  RESULTS,
-  check,
-  checkMultiple,
-  request,
-  requestMultiple,
-} from 'react-native-permissions';
+import {PERMISSIONS, RESULTS, check, request} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
-let userid = '';
 const Chats = props => {
-  // console.log(props?.route?.params);
+
   const [messages, setMessages] = useState([]);
-  const [isAttachImage, setIsAttachImage] = useState(false);
-  const [isAttachFile, setIsAttachFile] = useState(false);
-  const [imagePath, setImagePath] = useState('');
-  const [filePath, setFilePath] = useState('');
   const [userLatitude, setUserLatitude] = useState(null);
   const [userLongitude, setUserLongitude] = useState(null);
   const [dropdown, setDropDown] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [allSetting, setAllSetting] = useState();
   const [contactChatSetting, setContactChatSetting] = useState();
+  const userData = useSelector(state => state.user.userData);
+  const allSetting = useSelector(state => state.user.setting);
+
   useEffect(() => {
-    getAllSettingData(setAllSetting);
     getContactSettingData(
       props.route.params.data.userid,
       setContactChatSetting,
     );
-    const getUserid = async () => {
-      userid = await AsyncStorage.getItem('userid');
-    };
-    getUserid();
   });
   useEffect(() => {
     const subscriber = firestore()
       .collection('chats')
-      .doc('' + props.route.params.id + props.route.params.data.userid)
+      .doc('' + userData[0].userid + props.route.params.data.userid)
       .collection('messages')
       .orderBy('createdAt', 'desc');
     subscriber.onSnapshot(querysnapshot => {
@@ -297,139 +278,47 @@ const Chats = props => {
       });
     });
   };
-  const onSend = useCallback(
-    async (messages = []) => {
-      const msg = messages[0];
-      let mymsg = {};
-      if (isAttachImage) {
-        const fileName = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-        const reference = storage().ref(`media/${fileName}`);
-        await reference.putFile(imagePath);
-        const downloadURL = await reference.getDownloadURL();
-        mymsg = {
-          ...msg,
-          sendTo: props.route.params.data.userid,
-          sendBy: props.route.params.id,
-          createdAt: Date.parse(msg.createdAt),
-          image: downloadURL,
-        };
-        setMessages(previousMessages =>
-          GiftedChat.append(previousMessages, mymsg),
-        );
-        firestore()
-          .collection('chats')
-          .doc('' + props.route.params.data.userid + props.route.params.id)
-          .collection('media')
-          .add({
-            _id: mymsg.messageId,
-            image: mymsg.downloadURL,
-            createdAt: mymsg.Date.parse(new Date()),
-            sendBy: props.route.params.id,
-          });
-        firestore()
-          .collection('chats')
-          .doc('' + props.route.params.id + props.route.params.data.userid)
-          .collection('media')
-          .add({
-            _id: mymsg.messageId,
-            image: mymsg.downloadURL,
-            createdAt: mymsg.Date.parse(new Date()),
-            sendBy: props.route.params.id,
-          });
-
-        setImagePath('');
-        setIsAttachImage(false);
-      } else if (isAttachFile) {
-        mymsg = {
-          ...msg,
-          sendBy: props.route.params.id,
-          sendTo: props.route.params.data.userid,
-          createdAt: Date.parse(msg.createdAt),
-          file: {
-            url: filePath,
-          },
-        };
-        setMessages(previousMessages =>
-          GiftedChat.append(previousMessages, mymsg),
-        );
-        setFilePath('');
-        setIsAttachFile(false);
-      } else {
-        mymsg = {
-          ...msg,
-          sendBy: props.route.params.id,
-          sendTo: props.route.params.data.userid,
-          createdAt: Date.parse(msg.createdAt),
-          sent: true,
-        };
-        setMessages(previousMessages =>
-          GiftedChat.append(previousMessages, mymsg),
-        );
-      }
-      firestore()
-        .collection('chats')
-        .doc('' + props.route.params.id + props.route.params.data.userid)
-        .collection('messages')
-        .add(mymsg);
-      firestore()
-        .collection('chats')
-        .doc('' + props.route.params.data.userid + props.route.params.id)
-        .collection('messages')
-        .add(mymsg);
-      fetch(
-        'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send HTTP/1.1',
-        {
-          method: 'POST',
-          'Content-Type': 'application/json',
-          body: {
-            message: {
-              token:
-                'c5G0mwYkSsKxNHg3Ce-Gev:APA91bE2x42JhfiR2RHHwhEL0Wv9fFZjI0tbyCcGVAhD1p2CRyFtaPGuIXiKZuMEJAIcGzldLDhXIsgzXjVPatMbU9QJ1mb_p2HPaZDH_LAqLjIGW2tOVnu1fohyYLT8GAxLYalzG-Yo',
-              notification: {
-                body: 'This is an FCM notification message!',
-                title: 'FCM Message',
-              },
-            },
-          },
-        },
-      )
-        .then(res => {
-          console.log(res, '=================fcm res');
-        })
-        .catch(error => {
-          console.log(error, '============fcm error');
-        });
-    },
-    [filePath],
-  );
-  const renderChatFooter = useCallback(() => {
-    if (imagePath) {
-      return (
-        <View style={styles.chatFooter}>
-          <Image source={{uri: imagePath}} style={{height: 100, width: 100}} />
-          <TouchableOpacity
-            onPress={() => setImagePath('')}
-            style={styles.buttonFooterChatImg}>
-            <Ionicons name="close" size={20} />
-          </TouchableOpacity>
-        </View>
-      );
-    }
-    if (filePath) {
-      return (
-        <View style={styles.chatFooter}>
-          <InChatFileTransfer filePath={filePath} />
-          <TouchableOpacity
-            onPress={() => setFilePath('')}
-            style={styles.buttonFooterChat}>
-            <Ionicons name="close" size={20} />
-            {/* <Text style={styles.textFooterChat}>X</Text> */}
-          </TouchableOpacity>
-        </View>
-      );
-    }
-    return null;
-  }, [filePath, imagePath]);
+  const onSend = async (messages = []) => {
+    const msg = messages[0];
+    console.log(msg);
+    let mymsg = {
+      ...msg,
+      sendBy: userData[0].userid,
+      sendTo: props.route.params.data.userid,
+      createdAt: Date.parse(msg.createdAt),
+      sent: true,
+    };
+    setMessages(previousMessages => GiftedChat.append(previousMessages, mymsg));
+    firestore()
+      .collection('chats')
+      .doc('' + userData[0].userid + props.route.params.data.userid)
+      .collection('messages')
+      .add(mymsg);
+    firestore()
+      .collection('chats')
+      .doc('' + props.route.params.data.userid + userData[0].userid)
+      .collection('messages')
+      .add(mymsg);
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+    myHeaders.append(
+      'Authorization',
+      'key=AAAASdPdO-A:APA91bE5ZEOR5aZFGQK7Gy9GBHJl3A2pOGlyYtopFE0SDLXQFjHpUz7VYCqyEPfHbrPNvLE4t0jAHC76nn97n1t19gkBbh8ZuknJSVx_TA4Dwg9O4qe7euxmRUQ210z7K-ZCF-0-b5M_',
+    );
+    sendNotification({
+      to: props?.route?.params?.data?.fcmToken,
+      notification: {
+        body: msg.text,
+        title: userData[0].name,
+        imageurl: userData[0].profilepic,
+      },
+      data: {
+        senderID: userData[0].userid,
+        type: 'Chats',
+      },
+    });
+    
+  };
   const renderSend = props => {
     return (
       <View style={{flexDirection: 'row'}}>
@@ -454,14 +343,14 @@ const Chats = props => {
   const renderBubble = props => {
     const {currentMessage} = props;
     if (currentMessage.fileUri && currentMessage.fileName) {
-      console.log(props.currentMessage.user._id === userid);
+      console.log(props.currentMessage.user._id === userData[0].userid);
       return (
         <TouchableOpacity
           onPress={() => downloadDoc(currentMessage)}
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id === userid
+              props.currentMessage.user._id === userData[0].userid
                 ? Color.defaultBlue
                 : 'rgba(255,255,255,1)',
             borderRadius: 5,
@@ -471,13 +360,15 @@ const Chats = props => {
           <InChatFileTransfer
             style={{marginTop: -10}}
             currentMessage={currentMessage}
-            userdata={userid}
+            userdata={userData[0].userid}
           />
           <View>
             <Time
               currentMessage={currentMessage}
               position={
-                props.currentMessage.user._id === userid ? 'right' : 'left'
+                props.currentMessage.user._id === userData[0].userid
+                  ? 'right'
+                  : 'left'
               }
             />
           </View>
@@ -490,7 +381,7 @@ const Chats = props => {
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id === userid
+              props.currentMessage.user._id === userData[0].userid
                 ? Color.defaultBlue
                 : 'rgba(255,255,255,1)',
             borderRadius: 5,
@@ -500,7 +391,7 @@ const Chats = props => {
           <InChatContactTransfer
             style={{marginTop: -10}}
             currentMessage={currentMessage}
-            userdata={userid}
+            userdata={userData[0].userid}
           />
         </View>
       );
@@ -511,7 +402,7 @@ const Chats = props => {
           style={{
             ...styles.fileContainer,
             backgroundColor:
-              props.currentMessage.user._id === userid
+              props.currentMessage.user._id === userData[0].userid
                 ? Color.defaultBlue
                 : 'rgba(255,255,255,1)',
             borderRadius: 5,
@@ -521,13 +412,15 @@ const Chats = props => {
           <InChatCurrentLocation
             style={{marginTop: -10}}
             currentMessage={currentMessage}
-            userdata={userid}
+            userdata={userData[0].userid}
           />
           <View>
             <Time
               currentMessage={currentMessage}
               position={
-                props.currentMessage.user._id === userid ? 'right' : 'left'
+                props.currentMessage.user._id === userData[0].userid
+                  ? 'right'
+                  : 'left'
               }
               containerStyle={{
                 left: StyleSheet.create({
@@ -633,7 +526,6 @@ const Chats = props => {
 
   return (
     <View style={{flex: 1}}>
-      {/*  onLayout={initialLayout}> */}
       <View
         style={{
           height: 60,
@@ -686,7 +578,7 @@ const Chats = props => {
           <Pressable
             onPress={() =>
               props.navigation.navigate('Call', {
-                userid: props.route.params.id,
+                userid: userData[0].userid,
                 call: 'voice call',
               })
             }>
@@ -694,13 +586,12 @@ const Chats = props => {
               name="phone"
               color={'white'}
               size={20}
-              // style={{marginHorizontal: 10}}
             />
           </Pressable>
           <Pressable
             onPress={() =>
               props.navigation.navigate('Call', {
-                userid: props.route.params.id,
+                userid: userData[0].userid,
                 call: 'agora',
               })
             }>
@@ -736,7 +627,7 @@ const Chats = props => {
           messages={messages}
           onSend={messages => onSend(messages)}
           user={{
-            _id: props.route.params.id,
+            _id: userData[0].userid,
           }}
           renderBubble={renderBubble}
           alwaysShowSend
@@ -745,7 +636,6 @@ const Chats = props => {
           alignTop={true}
           isLoadingEarlier={true}
           scrollToBottomComponent={scrollToBottomComponent}
-          renderChatFooter={renderChatFooter}
           renderInputToolbar={renderInputToolbar}
           renderComposer={renderComposer}
           renderAvatar={null}
@@ -811,8 +701,7 @@ const Chats = props => {
                         setModalVisible(false);
                         _pickDocument();
                       }}
-                      style={{
-                      }}>
+                      style={{}}>
                       <View
                         style={{
                           height: 50,
