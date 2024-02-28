@@ -5,7 +5,6 @@ import messaging from '@react-native-firebase/messaging';
 import Contact from 'react-native-contacts';
 import {openCamera, openPicker} from 'react-native-image-crop-picker';
 import {PermissionsAndroid} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
 
 let userid = '';
 // ========================= All users datalist ===================
@@ -35,7 +34,6 @@ export const getAllSettingData = async () => {
     .collection('setting')
     .doc('chatSetting')
     .get();
-  // setData(chatsettingData.data());
   return chatsettingData.data();
 };
 // ========================= each contact chat setting ========================
@@ -151,13 +149,11 @@ export const getAllContact = async () => {
 // ============================ get fcm token ==================================
 export const getToken = async () => {
   let fcmToken = await AsyncStorage.getItem('fcmToken');
-  // console.log('old token', fcmToken);
   if (!fcmToken) {
     try {
       await messaging().registerDeviceForRemoteMessages();
       const fcmToken = await messaging().getToken();
       if (fcmToken) {
-        console.log(fcmToken);
         firestore()
           .collection('users')
           .doc(userid)
@@ -165,7 +161,6 @@ export const getToken = async () => {
             fcmToken: fcmToken,
           })
           .then(res => {
-            console.log(res);
           })
           .catch(error => console.log(error, 'error in profile modal'));
         await AsyncStorage.setItem('fcmToken', fcmToken);
@@ -192,20 +187,18 @@ export const sendNotification = data => {
   };
   fetch('https://fcm.googleapis.com/fcm/send', requestOptions)
     .then(res => {
-      console.log(res, '=================fcm res');
+      // console.log(res, '=================fcm res');
     })
     .catch(error => {
       console.log(error, '============fcm error');
     });
 };
 export const notification = navigation => {
-  // const navigation = useNavigation()
   messaging().onNotificationOpenedApp(remoteMessage => {
     console.log(
       'Notification caused app to open from background state:',
       remoteMessage,
     );
-    console.log(userid);
     const userid = remoteMessage?.data?.senderID;
     firestore()
       .collection('users')
@@ -268,7 +261,6 @@ const setProfilePic = async imagepath => {
         profilePic: downloadURL,
       })
       .then(res => {
-        console.log(res);
       })
       .catch(error => console.log(error, 'error in profile modal'));
   } catch (error) {
@@ -302,7 +294,6 @@ export const choosegallery = ({toggleModal}) => {
 };
 // ================================== remove profile pic ===========================
 export const removeProfilePic = ({profilePic, toggleModal}) => {
-  console.log(profilePic);
   firestore()
     .collection('users')
     .doc(userid)
@@ -318,7 +309,11 @@ export const removeProfilePic = ({profilePic, toggleModal}) => {
     .catch(error => console.log(error));
 };
 // ================================ get friends Profile Info ===============================
-export const getFriendsProfileInfo = async ({friendsId, setAllMedia}) => {
+export const getFriendsProfileInfo = async ({
+  friendsId,
+  setAllMedia,
+  setAllDocs,
+}) => {
   userid = await AsyncStorage.getItem('userid');
   const media = firestore()
     .collection('chats')
@@ -330,6 +325,17 @@ export const getFriendsProfileInfo = async ({friendsId, setAllMedia}) => {
       return item._data;
     });
     setAllMedia(allmessages);
+  });
+  const docs = firestore()
+    .collection('chats')
+    .doc(userid + friendsId)
+    .collection('docs')
+    .orderBy('createdAt', 'desc');
+  docs.onSnapshot(querysnapshot => {
+    const alldocs = querysnapshot.docs.map(item => {
+      return item._data;
+    });
+    setAllDocs(alldocs);
   });
 };
 // =============================== get permission =============================

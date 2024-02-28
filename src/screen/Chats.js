@@ -33,7 +33,10 @@ import {
   InChatFileTransfer,
 } from '../component/InChatFileTransfer';
 import Dropdown, {RenderDropdown} from '../component/Dropdown';
-import {getContactSettingData, sendNotification} from '../component/AllFunctions';
+import {
+  getContactSettingData,
+  sendNotification,
+} from '../component/AllFunctions';
 import Geolocation from '@react-native-community/geolocation';
 import {PERMISSIONS, RESULTS, check, request} from 'react-native-permissions';
 import RNFetchBlob from 'rn-fetch-blob';
@@ -41,7 +44,6 @@ import FileViewer from 'react-native-file-viewer';
 import {useSelector} from 'react-redux';
 
 const Chats = props => {
-
   const [messages, setMessages] = useState([]);
   const [userLatitude, setUserLatitude] = useState(null);
   const [userLongitude, setUserLongitude] = useState(null);
@@ -58,6 +60,7 @@ const Chats = props => {
     );
   });
   useEffect(() => {
+    console.log(userData);
     const subscriber = firestore()
       .collection('chats')
       .doc('' + userData[0].userid + props.route.params.data.userid)
@@ -317,7 +320,6 @@ const Chats = props => {
         type: 'Chats',
       },
     });
-    
   };
   const renderSend = props => {
     return (
@@ -582,11 +584,7 @@ const Chats = props => {
                 call: 'voice call',
               })
             }>
-            <FontAwesome
-              name="phone"
-              color={'white'}
-              size={20}
-            />
+            <FontAwesome name="phone" color={'white'} size={20} />
           </Pressable>
           <Pressable
             onPress={() =>

@@ -1,11 +1,21 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImageView from 'react-native-image-viewing';
+import {useSelector} from 'react-redux';
 
 const MediaPage = props => {
+  const [currIndex, setCurrIndex] = useState(props?.route?.params?.imageIndex);
+  const userData = useSelector(state => state.user.userData);
   // console.log(props?.route?.params?.data[props?.route?.params?.imageIndex]?.image);
-  const headerComponent = () => {
+  const headerComponent = imageIndex => {
+    // console.log(
+    //   imageIndex,
+    //   props?.route?.params?.data[
+    //     imageIndex === undefined ? props?.route?.params?.imageIndex : imageIndex
+    //   ]?.user?._id ,userData[0].userid
+    // );
+
     return (
       <View
         style={{
@@ -22,7 +32,13 @@ const MediaPage = props => {
             onPress={() => props.navigation.goBack()}>
             <Ionicons name="arrow-back" size={20} color={'white'} />
             <Text style={{marginLeft: 20, fontSize: 22, color: 'white'}}>
-              {/* {props.route.params.username} */}
+              {props?.route?.params?.data[
+                imageIndex === undefined
+                  ? props?.route?.params?.imageIndex
+                  : imageIndex
+              ]?.user?._id === userData[0].userid
+                ? 'You'
+                : props?.route?.params?.friendData?.name}
             </Text>
           </TouchableOpacity>
         </View>
@@ -54,10 +70,13 @@ const MediaPage = props => {
           },
         ]}>
         <ImageView
-          HeaderComponent={headerComponent}
+          HeaderComponent={item => headerComponent(item.imageIndex)}
           FooterComponent={footerComponent}
-          images={[{uri:props?.route?.params?.data[props?.route?.params?.imageIndex]?.image}]}
+          images={props?.route?.params?.data}
+          // images={[{uri:props?.route?.params?.data[props?.route?.params?.imageIndex]?.image}]}
           imageIndex={props?.route?.params?.imageIndex}
+          keyExtractor={item => item.imageIndex}
+          onImageIndexChange={item => setCurrIndex(item)}
           swipeToCloseEnabled={true}
           visible={true}
           onRequestClose={() => {

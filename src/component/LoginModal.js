@@ -1,4 +1,4 @@
-import firestore from '@react-native-firebase/firestore';
+import firestore, {firebase} from '@react-native-firebase/firestore';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import {
 } from '@react-native-google-signin/google-signin';
 import {useDispatch} from 'react-redux';
 import {addUserdata} from '../redux/slice/Userslice';
+import {KeyboardAvoidingView} from 'react-native';
 
 // import {
 //   getAuth,
@@ -69,9 +70,13 @@ const LoginModal = props => {
   };
 
   async function signinWithPhoneNumber(phoneNumber) {
+    const settings = auth().settings;
+    settings.forceRecaptchaFlowForTesting=true;
+    // console.log(settings.forceRecaptchaFlowForTesting,'ljhgghghcgvh');
+
     console.log(phoneNumber + 'jhhklk');
     // setLoading(true);
-    const confirmation = await auth().verifyPhoneNumber(phoneNumber);
+    const confirmation = await auth().signInWithPhoneNumber('+919984780520');
     console.log(confirmation + '=====================');
     console.log(phoneNumber + 'jhhklk');
     // setLoading(false);
@@ -129,19 +134,6 @@ const LoginModal = props => {
   };
   return (
     <>
-      {/* {loading && (
-        <View
-          style={{
-            height: '100%',
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'white',
-          }}>
-          <Text>Loading...</Text>
-          <ActivityIndicator size={'large'} color={'#00ff00'} />
-        </View>
-      )} */}
       <Modal
         style={[{height: '50%'}]}
         animationType="slide"
@@ -189,8 +181,8 @@ const LoginModal = props => {
               initialValues={{mobile: '+91', name: ''}}
               validationSchema={loginSchema}
               onSubmit={(values, action) => {
-                setLoginData(values);
                 // signinWithPhoneNumber(values.mobile);
+                setLoginData(values);
                 loginUser(values);
               }}>
               {({
@@ -211,6 +203,7 @@ const LoginModal = props => {
                     <TextInput
                       style={{
                         borderColor: 'black',
+                        color: 'black',
                         padding: 5,
                         paddingHorizontal: 20,
                         borderRadius: 20,
@@ -237,6 +230,7 @@ const LoginModal = props => {
                     <TextInput
                       style={{
                         borderColor: 'black',
+                        color: 'black',
                         marginVertical: 5,
                         borderWidth: 0,
                         padding: 5,
@@ -278,10 +272,10 @@ const LoginModal = props => {
                     </Text>
                   </Pressable>
 
-                  <GoogleSigninButton
+                  {/* <GoogleSigninButton
                     size={GoogleSigninButton.Size.Icon}
                     onPress={() => signIn()}
-                  />
+                  /> */}
                 </>
               )}
             </Formik>

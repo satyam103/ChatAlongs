@@ -25,6 +25,7 @@ import {useDispatch} from 'react-redux';
 import {addUserdata} from '../redux/slice/Userslice';
 import firestore from '@react-native-firebase/firestore';
 import { getAllContact, getAllSettingData, notification } from '../component/AllFunctions';
+import MediaLinksDocs from '../screen/MediaLinksDocs';
 
 const Routing = () => {
   const Stack = createStackNavigator();
@@ -164,6 +165,10 @@ const Routing = () => {
         <Stack.Screen
           name="MediaPage"
           component={MediaPage}
+          options={({route, navigation}) => {}}
+        /><Stack.Screen
+          name="MediaLinkDocs"
+          component={MediaLinksDocs}
           options={({route, navigation}) => {}}
         />
         <Stack.Screen

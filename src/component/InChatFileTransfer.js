@@ -29,6 +29,10 @@ const InChatFileTransfer = ({currentMessage, userdata}) => {
     name = filePath.split('/').pop();
     fileType = filePath.split('.').pop();
   }
+  const fileSize =
+    Math.ceil(currentMessage?.fileSize / 1024) > 1024
+      ? Math.ceil((currentMessage?.fileSize / (1024 * 1024)) * 10) / 10 + ' MB'
+      : Math.ceil(currentMessage?.fileSize / 1024) + ' KB';
   return (
     <View style={styles.container}>
       <View style={styles.frame}>
@@ -37,6 +41,8 @@ const InChatFileTransfer = ({currentMessage, userdata}) => {
             source={
               fileType === 'pdf'
                 ? require('../../assets/image/pdf.png')
+                : fileType === 'jpg'
+                ? require('../../assets/image/jpg.png')
                 : require('../../assets/image/unknown.png')
             }
             style={{height: 40, width: 40, margin: 3}}
@@ -54,15 +60,30 @@ const InChatFileTransfer = ({currentMessage, userdata}) => {
               ]}>
               {name.replace('%20', '').replace(' ', '')}
             </Text>
-            <Text
-              style={[
-                styles.textType,
-                currentMessage.user._id !== userdata && {
-                  color: Color.defaultBlue,
-                },
-              ]}>
-              {fileType.toUpperCase()}
-            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                width: '100%',
+              }}>
+              <Text
+                style={[
+                  styles.textType,
+                  currentMessage.user._id !== userdata && {
+                    color: Color.defaultBlue,
+                  },
+                ]}>
+                {fileSize}
+              </Text>
+              <Text
+                style={[
+                  styles.textType,
+                  currentMessage.user._id !== userdata && {
+                    color: Color.defaultBlue,
+                  },
+                ]}>
+                {fileType.toUpperCase()}
+              </Text>
+            </View>
           </View>
         </View>
         {currentMessage.user._id !== userdata && (
@@ -331,7 +352,6 @@ const InChatContactTransfer = ({currentMessage, userdata}) => {
 };
 
 const InChatCurrentLocation = ({currentMessage, userdata}) => {
-  console.log(currentMessage, userdata);
   return (
     <View style={styles.container}>
       <View
@@ -344,9 +364,9 @@ const InChatCurrentLocation = ({currentMessage, userdata}) => {
           },
         ]}>
         <MapView
-          style={{flex: 1, alignItems: 'center',borderRadius: 10,}}
+          style={{flex: 1, alignItems: 'center', borderRadius: 10}}
           customMapStyle={mapStyle}
-          onPress={()=>openMap(currentMessage?.location)}
+          onPress={() => openMap(currentMessage?.location)}
           region={{
             latitude: currentMessage?.location?.latitude,
             longitude: currentMessage?.location?.longitude,
@@ -381,7 +401,7 @@ const styles = StyleSheet.create({
   textType: {
     color: 'white',
     marginTop: 5,
-    fontSize: 16,
+    fontSize: 15,
     marginLeft: 10,
     fontWeight: 'bold',
   },

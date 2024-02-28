@@ -14,7 +14,6 @@ import firestore from '@react-native-firebase/firestore';
 import Header from './Header';
 import {ScrollView} from 'react-native-gesture-handler';
 import {Image} from 'react-native';
-import {CheckBox} from 'react-native-elements';
 
 let userid = '';
 const SendImages = props => {
@@ -24,7 +23,6 @@ const SendImages = props => {
     };
     getUserid();
   });
-  // console.log(props?.route?.params);
   const onSend = ({text = ''}) => {
     let mymsg = {};
     props?.route?.params?.data.forEach(async element => {
@@ -93,7 +91,6 @@ const SendImages = props => {
         .collection('messages')
         .add(mymsg);
     }
-    console.log(mymsg);
     props.navigation.navigate('Chats', {
       data: props.route.params.userdata,
       id: userid,
@@ -138,7 +135,6 @@ const SendImages = props => {
           height: 80,
           backgroundColor: 'rgba(0,0,0,0)',
           width: '100%',
-          //   justifyContent: 'center',
         }}>
         <Formik
           initialValues={{text: ''}}
@@ -251,7 +247,6 @@ const SendImages = props => {
       <View
         style={[
           {
-            // flex:1,
             height: 100,
             width: '100%',
             alignContent: 'center',
@@ -288,7 +283,6 @@ const SendDocs = props => {
     };
     getUserid();
   });
-  console.log(props?.route?.params);
   const onSend = ({text = ''}) => {
     let mymsg = {};
     props?.route?.params?.data.forEach(async element => {
@@ -405,14 +399,13 @@ const SendDocs = props => {
       </View>
     );
   };
-  const FooterComponent = imageIndex => {
+  const FooterComponent = ({imageIndex}) => {
     return (
       <View
         style={{
           height: 80,
           backgroundColor: 'rgba(0,0,0,0)',
           width: '100%',
-          //   justifyContent: 'center',
         }}>
         <Formik
           initialValues={{text: ''}}
@@ -533,11 +526,16 @@ const SendDocs = props => {
         ]}>
         <ImageView
           HeaderComponent={item => headerComponent(item.imageIndex)}
-          FooterComponent={() => <FooterComponent imageIndex={currIndex} />}
+          FooterComponent={item => (
+            <FooterComponent imageIndex={item.imageIndex} />
+          )}
           images={props?.route?.params?.data}
           keyExtractor={item => item.imageIndex}
-          imageIndex={currIndex}
-          onImageIndexChange={item => setCurrIndex(item)}
+          imageIndex={0}
+          onImageIndexChange={item => {
+            setCurrIndex(item);
+            return item;
+          }}
           presentationStyle={'overFullScreen'}
           swipeToCloseEnabled={false}
           visible={true}
@@ -545,6 +543,7 @@ const SendDocs = props => {
             props.navigation.goBack();
           }}
         />
+        {/* <FooterComponent imageIndex={currIndex} /> */}
       </View>
     </View>
   );
@@ -563,7 +562,6 @@ const SendContact = props => {
       let date = new Date();
       let id = uuid.v4();
       try {
-        console.log(element)
         mymsg = {
           _id: id,
           contactDetail: element,
@@ -594,7 +592,6 @@ const SendContact = props => {
           .doc('' + props.route?.params?.userdata?.userid + userid)
           .collection('contact')
           .add(mymsg);
-        console.log(mymsg);
         props.navigation.navigate('Chats', {
           data: props?.route?.params?.userdata,
           id: userid,
@@ -686,27 +683,15 @@ const SendContact = props => {
                                   {number}
                                 </Text>
                                 <Text
-                                style={{
-                                  color: 'black',
-                                  fontSize: 14,
-                                  marginLeft: 15,
-                                }}>Mobile</Text>
+                                  style={{
+                                    color: 'black',
+                                    fontSize: 14,
+                                    marginLeft: 15,
+                                  }}>
+                                  Mobile
+                                </Text>
                               </View>
                             </View>
-                            {/* <CheckBox
-                              checked={
-                                values.data[index].checked[idx] === false
-                                  ? false
-                                  : true
-                              }
-                              checkedColor="green"
-                              onPress={() => {
-                                values.data[index].checked[idx] === false
-                                  ? (values.data[index].checked[idx] = true)
-                                  : (values.data[index].checked[idx] = false);
-                                console.log(values.data[index].checked[idx]);
-                              }}
-                            /> */}
                           </View>
                         );
                       })}
