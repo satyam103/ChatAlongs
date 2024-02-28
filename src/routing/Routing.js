@@ -18,30 +18,48 @@ import CallingPage from '../screen/CallingPage';
 import {ProfilePic, FriendsProfilePic} from '../screen/ProfilePic';
 import FriendsProfilePage from '../screen/FriendsProfilePage';
 import MediaPage from '../screen/MediaPage';
-import { SendContact, SendDocs, SendImages } from '../component/ChatSelectitem';
+import {SendContact, SendDocs, SendImages} from '../component/ChatSelectitem';
 import SendLocation from '../screen/SendLocation';
 import ShareContact from '../screen/ShareContact';
+import {useDispatch} from 'react-redux';
+import {addUserdata} from '../redux/slice/Userslice';
+import firestore from '@react-native-firebase/firestore';
+import { getAllContact, getAllSettingData, notification } from '../component/AllFunctions';
+import MediaLinksDocs from '../screen/MediaLinksDocs';
 
 const Routing = () => {
   const Stack = createStackNavigator();
   const [loggedin, setLoggedin] = useState();
   const navigation = useNavigation();
-
+  const dispatch = useDispatch();
   // ==================== check login ======================
   useEffect(() => {
-    checkLogin();
     setTimeout(() => {
+      checkLogin();
       if (loggedin) {
         navigation.navigate('Home');
       }
     }, 1000);
+    notification(navigation)
   });
   const checkLogin = async () => {
     const userid = await AsyncStorage.getItem('userid');
     if (userid) {
-      navigation.navigate('Home');
+      firestore()
+        .collection('users')
+        .where('userid', '==', userid)
+        .get()
+        .then(async res => {
+          if (res.docs[0]) {
+            const contact = getAllContact()
+            const setting = getAllSettingData()
+            dispatch(addUserdata({userdata:res.docs[0]._data,contact:await contact,setting:await setting}));
+            setLoggedin(userid); 
+            navigation.navigate('Home');
+          }
+        })
+        .catch(error => console.log(error));
     }
-    setLoggedin(userid);
   };
 
   const cardStyleInterpolator = ({current}) => ({
@@ -57,23 +75,11 @@ const Routing = () => {
     },
   });
 
-  const profilePicInterpolate = ({current}) => (
+  const profilePicInterpolate = ({current}) =>
     Animated.spring(a, {
       toValue: 2,
       useNativeDriver: true,
-    }).start()
-  )
-    // cardStyle: {
-    //   transform: [
-    //     {
-    //       translateX: current.progress.interpolate({
-    //         inputRange: [0, 1],
-    //         outputRange: [400, 0],
-    //       }),
-    //     },
-    //   ],
-    // },
-  // });
+    }).start();
 
   return (
     <>
@@ -139,7 +145,7 @@ const Routing = () => {
         <Stack.Screen
           name="Call"
           component={CallingPage}
-          options={{headerShown:true}}
+          options={{headerShown: true}}
         />
         <Stack.Screen
           name="ProfilePic"
@@ -159,6 +165,10 @@ const Routing = () => {
         <Stack.Screen
           name="MediaPage"
           component={MediaPage}
+          options={({route, navigation}) => {}}
+        /><Stack.Screen
+          name="MediaLinkDocs"
+          component={MediaLinksDocs}
           options={({route, navigation}) => {}}
         />
         <Stack.Screen

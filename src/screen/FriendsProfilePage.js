@@ -14,6 +14,7 @@ const FriendsProfilePage = props => {
     props?.route?.params?.item?.data,
   );
   const [allMedia, setAllMedia] = useState();
+  const [allDocs, setAllDocs] = useState();
   const {colors} = useTheme();
   // console.log(props.route.params, '=======================friendprofile');
   useEffect(() => {
@@ -21,11 +22,15 @@ const FriendsProfilePage = props => {
     getFriendsProfileInfo({
       friendsId: props?.route?.params?.item?.data?.userid,
       setAllMedia: setAllMedia,
+      setAllDocs: setAllDocs,
     });
   }, []);
   const getData = async () => {
     userid = await AsyncStorage.getItem('userid');
   };
+  const filteredMediaFile = allMedia?.map(item => {
+    return {...item, uri: item.image};
+  });
   // console.log(userid);
   return (
     <View>
@@ -148,7 +153,7 @@ const FriendsProfilePage = props => {
             </Text>
           </View>
         )}
-        {allMedia?.length > 0 && (
+        {(allMedia?.length > 0 || allDocs?.length > 0) && (
           <View
             style={{
               height: 150,
@@ -159,7 +164,11 @@ const FriendsProfilePage = props => {
               paddingHorizontal: 10,
             }}>
             <Pressable
-              onPress={() => console.log('Media links and docs')}
+              onPress={() =>
+                props.navigation.navigate('MediaLinkDocs', {
+                  friendsData: props?.route?.params?.item?.data,
+                })
+              }
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -192,13 +201,14 @@ const FriendsProfilePage = props => {
               initialNumToRender={10}
               showsHorizontalScrollIndicator={false}
               renderItem={item => {
-                console.log(item)
+                // console.log(item);
                 return (
                   <Pressable
                     onPress={() =>
                       props.navigation.navigate('MediaPage', {
                         imageIndex: item.index,
-                        data: allMedia,
+                        data: filteredMediaFile,
+                        friendData: props?.route?.params?.data,
                       })
                     }
                     style={{

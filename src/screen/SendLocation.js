@@ -12,7 +12,7 @@ import uuid from 'react-native-uuid';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {GiftedChat} from 'react-native-gifted-chat';
-import {Image} from 'react-native';
+// import RNLocation from 'react-native-location';
 
 let userid = '';
 const SendLocation = props => {
@@ -68,7 +68,6 @@ const SendLocation = props => {
       });
     }
   };
-
   const oncurrentlocationShare = () => {
     let mymsg = {};
     let date = new Date();
@@ -104,6 +103,29 @@ const SendLocation = props => {
       id: userid,
     });
   };
+
+  // const fetchLocation = () => {
+  //   const unsubscribe = RNLocation.subscribeToLocationUpdates(([locations]) => {
+  //     const locationPayload = {
+  //       latitude: locations.latitude,
+  //       longitude: locations.longitude,
+  //       accuracy: locations.accuracy,
+  //     };
+  //     dispatch(emitLocation(locationPayload));
+  //     unsubscribe();
+  //   });
+  // };
+
+  // const initLocationService = () => {
+  //   RNLocation.requestPermission({
+  //     ios: 'whenInUse',
+  //     android: {
+  //       detail: 'fine',
+  //     },
+  //   }).then(granted => {
+  //     if (granted) fetchLocation();
+  //   });
+  // };
 
   return (
     <SafeAreaView>
