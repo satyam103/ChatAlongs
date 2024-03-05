@@ -5,6 +5,8 @@ import messaging from '@react-native-firebase/messaging';
 import Contact from 'react-native-contacts';
 import {openCamera, openPicker} from 'react-native-image-crop-picker';
 import {PermissionsAndroid} from 'react-native';
+import RNFetchBlob from 'rn-fetch-blob';
+import FileViewer from 'react-native-file-viewer';
 
 let userid = '';
 // ========================= All users datalist ===================
@@ -160,8 +162,7 @@ export const getToken = async () => {
           .update({
             fcmToken: fcmToken,
           })
-          .then(res => {
-          })
+          .then(res => {})
           .catch(error => console.log(error, 'error in profile modal'));
         await AsyncStorage.setItem('fcmToken', fcmToken);
       }
@@ -176,18 +177,19 @@ export const sendNotification = data => {
   myHeaders.append('Content-Type', 'application/json');
   myHeaders.append(
     'Authorization',
-    'key=AAAASdPdO-A:APA91bE5ZEOR5aZFGQK7Gy9GBHJl3A2pOGlyYtopFE0SDLXQFjHpUz7VYCqyEPfHbrPNvLE4t0jAHC76nn97n1t19gkBbh8ZuknJSVx_TA4Dwg9O4qe7euxmRUQ210z7K-ZCF-0-b5M_',
+    'Bearer AAAASdPdO-A:APA91bE5ZEOR5aZFGQK7Gy9GBHJl3A2pOGlyYtopFE0SDLXQFjHpUz7VYCqyEPfHbrPNvLE4t0jAHC76nn97n1t19gkBbh8ZuknJSVx_TA4Dwg9O4qe7euxmRUQ210z7K-ZCF-0-b5M_',
   );
   const raw = JSON.stringify(data);
+  console.log(data);
   const requestOptions = {
     method: 'POST',
     headers: myHeaders,
     body: raw,
     redirect: 'follow',
   };
-  fetch('https://fcm.googleapis.com/fcm/send', requestOptions)
+  fetch('https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send', requestOptions)
     .then(res => {
-      // console.log(res, '=================fcm res');
+      console.log(res, '=================fcm res');
     })
     .catch(error => {
       console.log(error, '============fcm error');
@@ -199,12 +201,24 @@ export const notification = navigation => {
       'Notification caused app to open from background state:',
       remoteMessage,
     );
-    const userid = remoteMessage?.data?.senderID;
+    userid = remoteMessage?.data?.senderID;
     firestore()
       .collection('users')
       .where('userid', '==', userid)
       .get()
       .then(async res => {
+        firestore()
+          .collection('chats')
+          .doc(userid + remoteMessage?.data?.senderID)
+          .collection('message')
+          .where('_id', '==', remoteMessage?.data?.messageId)
+          .update({seen: 1, recieved: 1});
+        firestore()
+          .collection('chats')
+          .doc(remoteMessage?.data?.senderID + userid)
+          .where('_id', '==', remoteMessage?.data?.messageId)
+          .collection('message')
+          .set({seen: 1, recieved: 1});
         const contactData = await getAllContact();
         const filteredData = contactData.filter(values => {
           const present = res._docs.find(value => {
@@ -244,6 +258,52 @@ export const notification = navigation => {
           'Notification caused app to open from quit state:',
           remoteMessage,
         );
+        userid = remoteMessage?.data?.senderID;
+        firestore()
+          .collection('users')
+          .where('userid', '==', userid)
+          .get()
+          .then(async res => {
+            firestore()
+              .collection('chats')
+              .doc(userid + remoteMessage?.data?.senderID)
+              .collection('message')
+              .where('_id', '==', remoteMessage?.data?.messageId)
+              .update({seen: 1, recieved: 1});
+            firestore()
+              .collection('chats')
+              .doc(remoteMessage?.data?.senderID + userid)
+              .where('_id', '==', remoteMessage?.data?.messageId)
+              .collection('message')
+              .set({seen: 1, recieved: 1});
+            const contactData = await getAllContact();
+            const filteredData = contactData.filter(values => {
+              const present = res._docs.find(value => {
+                return values.number.includes(value._data.mobile) && value;
+              });
+              return present !== undefined && values.name;
+            });
+            const contactUserData = res._docs.map(values => {
+              const presentData = filteredData.find(value => {
+                return (
+                  value.number.includes(values._data.mobile) && {
+                    ...values._data,
+                    name: value.name,
+                  }
+                );
+              });
+              return {...values._data, name: presentData.name};
+            });
+            navigation.navigate(remoteMessage.data.type, {
+              data: contactUserData[0],
+            });
+          })
+          .catch(error => {
+            console.log(
+              error,
+              '=================== error on notification open ',
+            );
+          });
       }
     });
 };
@@ -260,8 +320,7 @@ const setProfilePic = async imagepath => {
       .update({
         profilePic: downloadURL,
       })
-      .then(res => {
-      })
+      .then(res => {})
       .catch(error => console.log(error, 'error in profile modal'));
   } catch (error) {
     console.error('Error uploading image: ', error);
@@ -307,6 +366,41 @@ export const removeProfilePic = ({profilePic, toggleModal}) => {
       console.log(res);
     })
     .catch(error => console.log(error));
+};
+// ============================= download document ===========================
+export const downloadDoc = ({fileUri, fileName, fileType}) => {
+  console.log(fileName, fileUri, fileType);
+  let path = RNFetchBlob.fs.dirs.DownloadDir + '/' + fileName;
+  RNFetchBlob.config({
+    fileCache: true,
+    addAndroidDownloads: {
+      useDownloadManager: true,
+      notification: true,
+      path: path,
+      description: 'file download',
+      mime: fileType,
+    },
+  })
+    .fetch('GET', fileUri, {})
+    .progress((received, total) => {
+      console.log('progress', received / total);
+    })
+    .then(res => {
+      console.log('hello', res);
+      FileViewer.open(path, {showOpenWithDialog: true})
+        .then(() => {
+          console.log('File opened successfully', path);
+        })
+        .catch(error => {
+          console.error('Error opening file:', error);
+          alert('Error', 'No app associated with this file type.');
+        });
+      console.log('The file saved to ', res.path());
+      // alert('file downloaded successfully ');
+    })
+    .catch(error => {
+      console.log(error, 'jhknjkjj');
+    });
 };
 // ================================ get friends Profile Info ===============================
 export const getFriendsProfileInfo = async ({
