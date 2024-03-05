@@ -16,6 +16,42 @@ import {ScrollView} from 'react-native-gesture-handler';
 import {Image} from 'react-native';
 
 let userid = '';
+const headerComponent = ({navigation, imageindex, fileName = ''}) => {
+  return (
+    <View
+      style={{
+        height: 60,
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+      }}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <TouchableOpacity
+          style={{
+            height: '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: 50,
+            width: 50,
+            borderRadius: 50,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: 5,
+          }}
+          onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color={'white'} />
+        </TouchableOpacity>
+        <View>
+          <Text style={{fontSize: 18, color: 'white'}}>{fileName}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const SendImages = props => {
   useEffect(() => {
     const getUserid = async () => {
@@ -95,38 +131,6 @@ const SendImages = props => {
       data: props.route.params.userdata,
       id: userid,
     });
-  };
-  const headerComponent = imageIndex => {
-    return (
-      <View
-        style={{
-          height: 60,
-          width: '100%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 10,
-        }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <TouchableOpacity
-            style={{
-              height: '100%',
-              flexDirection: 'row',
-              alignItems: 'center',
-              height: 50,
-              width: 50,
-              borderRadius: 50,
-              backgroundColor: 'rgba(0,0,0,0.6)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              margin: 5,
-            }}
-            onPress={() => props.navigation.goBack()}>
-            <Ionicons name="close" size={20} color={'white'} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
   };
   const FooterComponent = imageIndex => {
     return (
@@ -220,7 +224,9 @@ const SendImages = props => {
             borderRadius: 20,
             marginHorizontal: 5,
           }}>
-          <Text>{props?.route?.params?.userdata?.name}</Text>
+          <Text style={{color: 'white'}}>
+            {props?.route?.params?.userdata?.name}
+          </Text>
         </View>
         <Pressable
           text={values.text}
@@ -255,7 +261,10 @@ const SendImages = props => {
         ]}>
         <ImageView
           HeaderComponent={() =>
-            headerComponent(props?.route?.params?.data?.imageIndex)
+            headerComponent({
+              navigation: props.navigation,
+              imageIndex: props?.route?.params?.data?.imageIndex,
+            })
           }
           FooterComponent={() => (
             <FooterComponent
@@ -277,6 +286,15 @@ const SendImages = props => {
 
 const SendDocs = props => {
   const [currIndex, setCurrIndex] = useState(0);
+  const [message, setMessages] = useState([]);
+  const setImageMessage = ({index, text}) => {
+    setMessages(prev => {
+      console.log(prev, 'sgsrgrg', message[index]);
+      prev[index] = {text: text};
+      return [...prev];
+    });
+    console.log(index, 'dfgdfgdf', text, 'sgsrgrg', message[index]);
+  };
   useEffect(() => {
     const getUserid = async () => {
       userid = await AsyncStorage.getItem('userid');
@@ -362,44 +380,15 @@ const SendDocs = props => {
       id: userid,
     });
   };
-  const headerComponent = imageIndex => {
-    return (
-      <View
-        style={{
-          height: 60,
-          width: '100%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 10,
-        }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <TouchableOpacity
-            style={{
-              height: '100%',
-              flexDirection: 'row',
-              alignItems: 'center',
-              height: 50,
-              width: 50,
-              borderRadius: 50,
-              backgroundColor: 'rgba(0,0,0,0.6)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              margin: 5,
-            }}
-            onPress={() => props.navigation.goBack()}>
-            <Ionicons name="arrow-back" size={20} color={'white'} />
-          </TouchableOpacity>
-          <View>
-            <Text style={{fontSize: 18, color: 'white'}}>
-              {props?.route?.params?.data[imageIndex]?.name}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
+  const sendValues = props => {
+    console.log(props, message);
   };
-  const FooterComponent = ({imageIndex}) => {
+  const FooterComponent = ({
+    handleChange,
+    handleSubmit,
+    values,
+    imageIndex,
+  }) => {
     return (
       <View
         style={{
@@ -407,44 +396,48 @@ const SendDocs = props => {
           backgroundColor: 'rgba(0,0,0,0)',
           width: '100%',
         }}>
-        <Formik
-          initialValues={{text: ''}}
+        {/* <Formik
+          initialValues={{
+            text: message[imageIndex]?.text ? message[imageIndex]?.text : '',
+          }}
           onSubmit={(values, action) => {
-            onSend({text: values.text});
+            // onSend({text: values.text});
+            sendValues(values);
           }}>
           {({handleChange, handleSubmit, values}) => (
-            <>
-              <View
-                style={{
-                  backgroundColor: 'rgba(0,0,0,1)',
-                  borderRadius: 30,
-                  marginLeft: 10,
-                  marginRight: 10,
-                }}>
-                <InputToolbar
-                  {...props}
-                  renderComposer={() => (
-                    <RenderComposer
-                      handleChange={handleChange}
-                      values={values}
-                    />
-                  )}
-                  containerStyle={{
-                    backgroundColor: 'rgba(0,0,0,0)',
-                    borderTopWidth: 0,
-                    width: '100%',
-                    paddingHorizontal: 10,
-                  }}
-                />
-              </View>
-              <RenderSend handleSubmit={handleSubmit} values={values} />
-            </>
+            <> */}
+        <View
+          style={{
+            backgroundColor: 'rgba(0,0,0,1)',
+            borderRadius: 30,
+            marginLeft: 10,
+            marginRight: 10,
+          }}>
+          <InputToolbar
+            {...props}
+            renderComposer={() => (
+              <RenderComposer
+                handleChange={handleChange}
+                imageIndex={imageIndex}
+                values={values}
+              />
+            )}
+            containerStyle={{
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderTopWidth: 0,
+              width: '100%',
+              paddingHorizontal: 10,
+            }}
+          />
+        </View>
+        <RenderSend handleSubmit={handleSubmit} values={values} />
+        {/* </>
           )}
-        </Formik>
+        </Formik> */}
       </View>
     );
   };
-  const RenderComposer = ({handleChange, values}) => {
+  const RenderComposer = ({handleChange, imageIndex, values}) => {
     return (
       <View
         style={{
@@ -491,7 +484,9 @@ const SendDocs = props => {
             borderRadius: 20,
             marginHorizontal: 5,
           }}>
-          <Text>{props?.route?.params?.userdata?.name}</Text>
+          <Text style={{color: 'white'}}>
+            {props?.route?.params?.userdata?.name}
+          </Text>
         </View>
         <Pressable
           text={values.text}
@@ -524,26 +519,53 @@ const SendDocs = props => {
             justifyContent: 'center',
           },
         ]}>
-        <ImageView
-          HeaderComponent={item => headerComponent(item.imageIndex)}
-          FooterComponent={item => (
-            <FooterComponent imageIndex={item.imageIndex} />
+        <Formik
+          initialValues={{
+            text: message[currIndex]?.text ? message[currIndex]?.text : '',
+          }}
+          onSubmit={(values, action) => {
+            // onSend({text: values.text});
+            sendValues(values);
+          }}>
+          {({handleChange, handleSubmit, values}) => (
+            <>
+              <ImageView
+                HeaderComponent={item =>
+                  headerComponent({
+                    navigation: props.navigation,
+                    imageIndex: item.imageIndex,
+                    fileName: props?.route?.params?.data[item.imageIndex]?.name,
+                  })
+                }
+                FooterComponent={item => (
+                  <FooterComponent
+                    imageIndex={item.imageIndex}
+                    handleChange={handleChange}
+                    handleSubmit={handleSubmit}
+                    values={values}
+                  />
+                )}
+                images={props?.route?.params?.data}
+                keyExtractor={item => item.imageIndex}
+                imageIndex={0}
+                onImageIndexChange={item => {
+                  setCurrIndex(item);
+                  setImageMessage({index: item-1, text: values.text});
+                  values.text = message[currIndex]?.text
+                    ? message[currIndex]?.text
+                    : '';
+                  return item;
+                }}
+                presentationStyle={'overFullScreen'}
+                swipeToCloseEnabled={false}
+                visible={true}
+                onRequestClose={() => {
+                  props.navigation.goBack();
+                }}
+              />
+            </>
           )}
-          images={props?.route?.params?.data}
-          keyExtractor={item => item.imageIndex}
-          imageIndex={0}
-          onImageIndexChange={item => {
-            setCurrIndex(item);
-            return item;
-          }}
-          presentationStyle={'overFullScreen'}
-          swipeToCloseEnabled={false}
-          visible={true}
-          onRequestClose={() => {
-            props.navigation.goBack();
-          }}
-        />
-        {/* <FooterComponent imageIndex={currIndex} /> */}
+        </Formik>
       </View>
     </View>
   );

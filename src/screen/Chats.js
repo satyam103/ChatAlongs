@@ -34,16 +34,16 @@ import {
 } from '../component/InChatFileTransfer';
 import Dropdown, {RenderDropdown} from '../component/Dropdown';
 import {
+  downloadDoc,
   getContactSettingData,
   sendNotification,
 } from '../component/AllFunctions';
 import Geolocation from '@react-native-community/geolocation';
 import {PERMISSIONS, RESULTS, check, request} from 'react-native-permissions';
-import RNFetchBlob from 'rn-fetch-blob';
-import FileViewer from 'react-native-file-viewer';
 import {useSelector} from 'react-redux';
 
 const Chats = props => {
+  // console.log(props?.route?.params?.data)
   const [messages, setMessages] = useState([]);
   const [userLatitude, setUserLatitude] = useState(null);
   const [userLongitude, setUserLongitude] = useState(null);
@@ -75,12 +75,12 @@ const Chats = props => {
     check(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES).then(res => {
       console.log(res);
       if (res === RESULTS.GRANTED) {
-        check(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
-          console.log(res, 'media location');
-        });
         console.log(res, 'granted');
       } else {
-        checkPermission();
+        request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES).then(res => {
+          console.log(res, 'media location');
+        });
+        // checkPermission();
       }
     });
   }, []);
@@ -139,7 +139,7 @@ const Chats = props => {
   };
   const checkPermission = () => {
     request(PERMISSIONS.ANDROID.ACCESS_MEDIA_LOCATION).then(res => {
-      console.log(res);
+      console.log(res, 'fdshgf');
       if (res === RESULTS.GRANTED) {
         console.log(res, 'granted');
       }
@@ -198,41 +198,6 @@ const Chats = props => {
       }
     }
   };
-  // ========================== view document =============================
-  const downloadDoc = ({fileUri, fileName, fileType}) => {
-    console.log(fileName, fileUri, fileType);
-    let path = RNFetchBlob.fs.dirs.DownloadDir + '/' + fileName;
-    RNFetchBlob.config({
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: true,
-        path: path,
-        description: 'file download',
-        mime: fileType,
-      },
-    })
-      .fetch('GET', fileUri, {})
-      .progress((received, total) => {
-        console.log('progress', received / total);
-      })
-      .then(res => {
-        console.log('hello', res);
-        FileViewer.open(path, {showOpenWithDialog: true})
-          .then(() => {
-            console.log('File opened successfully', path);
-          })
-          .catch(error => {
-            console.error('Error opening file:', error);
-            alert('Error', 'No app associated with this file type.');
-          });
-        console.log('The file saved to ', res.path());
-        // alert('file downloaded successfully ');
-      })
-      .catch(error => {
-        console.log(error, 'jhknjkjj');
-      });
-  };
   // ======================= choose image from gallery =========================
   const selectImage = () => {
     ImagePicker.openPicker({
@@ -283,7 +248,7 @@ const Chats = props => {
   };
   const onSend = async (messages = []) => {
     const msg = messages[0];
-    console.log(msg);
+    // console.log(msg);
     let mymsg = {
       ...msg,
       sendBy: userData[0].userid,
@@ -302,22 +267,19 @@ const Chats = props => {
       .doc('' + props.route.params.data.userid + userData[0].userid)
       .collection('messages')
       .add(mymsg);
-    const myHeaders = new Headers();
-    myHeaders.append('Content-Type', 'application/json');
-    myHeaders.append(
-      'Authorization',
-      'key=AAAASdPdO-A:APA91bE5ZEOR5aZFGQK7Gy9GBHJl3A2pOGlyYtopFE0SDLXQFjHpUz7VYCqyEPfHbrPNvLE4t0jAHC76nn97n1t19gkBbh8ZuknJSVx_TA4Dwg9O4qe7euxmRUQ210z7K-ZCF-0-b5M_',
-    );
     sendNotification({
-      to: props?.route?.params?.data?.fcmToken,
-      notification: {
-        body: msg.text,
-        title: userData[0].name,
-        imageurl: userData[0].profilepic,
-      },
-      data: {
-        senderID: userData[0].userid,
-        type: 'Chats',
+      message: {
+        token: props?.route?.params?.data?.fcmToken,
+        notification: {
+          body: msg.text,
+          title: userData[0].name,
+          imageurl: userData[0].profilePic,
+        },
+        data: {
+          senderID: userData[0].userid,
+          messageId: msg._id,
+          type: 'Chats',
+        },
       },
     });
   };
@@ -691,7 +653,7 @@ const Chats = props => {
                     style={{
                       flexWrap: 'wrap',
                       flexDirection: 'row',
-                      width: 210,
+                      // width: 210,
                       paddingVertical: 10,
                     }}>
                     <Pressable
@@ -713,7 +675,7 @@ const Chats = props => {
                         <Ionicons name="document" size={22} color={'white'} />
                       </View>
                       <View>
-                        <Text>Document</Text>
+                        <Text style={{color: 'white'}}>Document</Text>
                       </View>
                     </Pressable>
                     <Pressable
@@ -736,7 +698,7 @@ const Chats = props => {
                         }}>
                         <Ionicons name="camera" size={22} color={'white'} />
                       </View>
-                      <Text>camera</Text>
+                      <Text style={{color: 'white'}}>camera</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -758,7 +720,7 @@ const Chats = props => {
                         }}>
                         <FontAwesome name="photo" size={22} color={'white'} />
                       </View>
-                      <Text>Gallery</Text>
+                      <Text style={{color: 'white'}}>Gallery</Text>
                     </Pressable>
                   </View>
                   <View
@@ -790,7 +752,7 @@ const Chats = props => {
                         }}>
                         <Ionicons name="person" size={22} color={'white'} />
                       </View>
-                      <Text>Contact</Text>
+                      <Text style={{color: 'white'}}>Contact</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -811,11 +773,11 @@ const Chats = props => {
                           alignItems: 'center',
                           borderRadius: 50,
                           backgroundColor: 'green',
-                          marginHorizontal: 15,
+                          marginHorizontal: 25,
                         }}>
                         <Ionicons name="location" size={22} color={'white'} />
                       </View>
-                      <Text>Location</Text>
+                      <Text style={{color: 'white'}}>Location</Text>
                     </Pressable>
                   </View>
                 </View>
